@@ -1,30 +1,48 @@
 #!/bin/bash
 set -e
 
+error() {
+    local parent_lineno="$1"
+    local message="$2"
+    local code="${3:-1}"
+    if [[ -n "$message" ]] ; then
+        echo "Error on or near line ${parent_lineno}: ${message}; exiting with status ${code}"
+    else
+        echo "Error on or near line ${parent_lineno}; exiting with status ${code}"
+    fi
+    exit "${code}"
+}
+trap 'error ${LINENO}' ERR
+
 function echo_task() {
-	echo -e " \e[33m*\e[39m $1"
+    echo -e " \e[33m*\e[39m $1"
 }
 
 function echo_sub_task() {
-	echo -e "   \e[33m*\e[39m $1"
+    echo -e "   \e[33m*\e[39m $1"
 }
 
 function check_apt_installed() {
     return dpkg -l "$1" &> /dev/null
 }
 function apt_install() {
-    if check_apt_installed "$1"; then
-        echo_sub_task "Installing $1"
-        sudo apt-get install -y -qq "$1"
-    else
+    if dpkg --get-selections | grep -q "^1[[:space:]]*install$" >/dev/null; then
         echo_sub_task "$1 already installed"
+    else
+        echo_sub_task "Installing $1"
+        sudo apt-get -qq install -y "$1"
     fi
 }
 
 # --------------------------------------------------
 
-echo "Running system setup"
 REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+echo "Running system setup"
+echo "--------------------"
+echo "Home directory: $HOME"
+echo "Dotfiles: $REPO"
+echo ""
 
 echo_task "Updating submodules"
 git --git-dir="$REPO/.git" submodule init
@@ -32,15 +50,20 @@ git --git-dir="$REPO/.git" submodule update
 
 if command -v apt-get > /dev/null; then
     echo_task "Installing apt packages"
+    apt_install "curl"
     apt_install "htop"
+    apt_install "python"
+    apt_install "python-pip"
+    apt_install "python3"
+    apt_install "python3-pip"
     apt_install "tmux"
     apt_install "vim"
-    apt_install "curl"
 else
     echo_task "Skipping apt packages"
 fi
 
 echo_task "Setting up gnupg config"
+mkdir -p "$HOME/.gnupg"
 ln -sf "$REPO/gnupg/gpg.conf" "$HOME/.gnupg/gpg.conf"
 ln -sf "$REPO/gnupg/scd-event" "$HOME/.gnupg/scd-event"
 chmod +x "$HOME/.gnupg/scd-event"
@@ -82,7 +105,7 @@ if [ -d "$HOME/.oh-my-zsh" ]; then
 	echo_sub_task "oh-my-zsh already installed"
 else
 	echo_sub_task "Installing oh-my-zsh"
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ]
 fi
 cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
 cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"
@@ -105,7 +128,7 @@ echo_task "Setting up terminator"
 mkdir -p "${HOME}/.config/terminator"
 cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
-powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' 2>/dev/null)
+powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' > /dev/null 2>&1  || true)
 if [[ "$powerline_path" != "" ]]; then
 	echo_task "Powerline already installed"
 else
