@@ -27,8 +27,8 @@ echo "Running system setup"
 REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 echo_task "Updating submodules"
-git submodule init
-git submodule update
+git --git-dir="$REPO/.git" submodule init
+git --git-dir="$REPO/.git" submodule update
 
 if command -v apt-get > /dev/null; then
     echo_task "Installing apt packages"
