@@ -1,0 +1,123 @@
+#!/bin/bash
+set -e
+
+function echo_task() {
+	echo -e " \e[33m*\e[39m $1"
+}
+
+function echo_sub_task() {
+	echo -e "   \e[33m*\e[39m $1"
+}
+
+function check_apt_installed() {
+    return dpkg -l "$1" &> /dev/null
+}
+function apt_install() {
+    if check_apt_installed "$1"; then
+        echo_sub_task "Installing $1"
+        sudo apt-get install -y -qq "$1"
+    else
+        echo_sub_task "$1 already installed"
+    fi
+}
+
+# --------------------------------------------------
+
+echo "Running system setup"
+REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+echo_task "Updating submodules"
+git submodule init
+git submodule update
+
+if command -v apt-get > /dev/null; then
+    echo_task "Installing apt packages"
+    apt_install "htop"
+    apt_install "tmux"
+    apt_install "vim"
+    apt_install "curl"
+else
+    echo_task "Skipping apt packages"
+fi
+
+echo_task "Setting up gnupg config"
+ln -sf "$REPO/gnupg/gpg.conf" "$HOME/.gnupg/gpg.conf"
+ln -sf "$REPO/gnupg/scd-event" "$HOME/.gnupg/scd-event"
+chmod +x "$HOME/.gnupg/scd-event"
+
+echo_task "Setting up VIM config"
+ln -sf "$REPO/vim/.vimrc" "$HOME/.vimrc"
+
+echo_task "Setting up TMUX config"
+ln -sf "$REPO/tmux/.tmux.conf" "$HOME/.tmux.conf"
+if [ -z "$HOME/.tmux/plugins/tpm" ]; then
+	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+
+echo_task "Setup local bin"
+mkdir -p "$HOME/bin"
+for f in $REPO/bin/*
+do
+	bin_filename=$(basename "$f")
+	echo_sub_task "$bin_filename"
+	ln -sf "$REPO/bin/$bin_filename" "$HOME/bin/$bin_filename"
+done
+for f in $REPO/scripts/bin/*
+do
+        bin_filename=$(basename "$f")
+        echo_sub_task "$bin_filename"
+        ln -sf "$REPO/scripts/bin/$bin_filename" "$HOME/bin/$bin_filename"
+done
+
+
+echo_task "Setting up ZSH"
+if check_apt_installed "fonts-powerline"; then
+    echo_sub_task "Installing powerline fonts"
+    sudo apt-get install -y -q fonts-powerline
+    echo_sub_task "Re-building font cache"
+    fc-cache -f
+fi
+
+if [ -d "$HOME/.oh-my-zsh" ]; then
+	echo_sub_task "oh-my-zsh already installed"
+else
+	echo_sub_task "Installing oh-my-zsh"
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+fi
+cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
+cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+cp "$REPO/zsh/.zshenv" "$HOME/.zshenv"
+
+echo_task "Setting up git"
+git config --global core.editor vim  &> /dev/null
+git config --global push.default current &> /dev/null
+
+
+if command -v gsettings > /dev/null; then
+    echo_task "Setting up gnome"
+    gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
+else
+    echo_task "Skipping gnome setup"
+fi
+
+
+echo_task "Setting up terminator"
+mkdir -p "${HOME}/.config/terminator"
+cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
+
+powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' 2>/dev/null)
+if [[ "$powerline_path" != "" ]]; then
+	echo_task "Powerline already installed"
+else
+	echo_task "Setup powerline"
+	pip install --user git+git://github.com/powerline/powerline
+	pip3 install --user git+git://github.com/powerline/powerline
+fi
+ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
+
+
+echo_task "Setting up gradle"
+mkdir -p "$HOME/.gradle"
+ln -sf "$REPO/gradle/gradle.properties" "$HOME/.gradle/gradle.properties"
+
+echo -e "\n\e[32mSetup complete\e[39m"
