@@ -2,10 +2,9 @@ sudo: required
 services:
 - docker
 script:
-- docker build .
-before_install:
 - openssl aes-256-cbc -K $encrypted_bdf28905e8e8_key -iv $encrypted_bdf28905e8e8_iv
   -in deploykey-scripts.enc -out ~\/.ssh/github.com/deploykey-scripts -d
 - chmod 600 deploykey-scripts
 - eval `ssh-agent -s`
 - ssh-add deploykey-scripts
+- docker build .
