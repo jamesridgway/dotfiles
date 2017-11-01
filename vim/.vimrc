@@ -6,7 +6,7 @@ python3 del powerline_setup
 " Always show vim
 set laststatus=2
 
-" Use the 245 cp;pirs
+" Use the 256 colours
 set t_Co=256
 
 set hlsearch

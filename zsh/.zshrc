@@ -29,10 +29,6 @@ if [ -n "$DESKTOP_SESSION" ];then
     export SSH_AUTH_SOCK
 fi
 
-# drone.io
-export DRONE_SERVER=http://drone-io
-export DRONE_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZXh0IjoiamFtZXMiLCJ0eXBlIjoidXNlciJ9.eKdsnnJr6Ll1TWlQqpP8oN8tyfCnh1Bnq_LBii2L3Rw
-
 # Powerline
 export POWERLINE_PATH=$(python3 -c 'import os; import pkgutil; print(os.path.dirname(pkgutil.get_loader("powerline").get_filename()))' 2>/dev/null)
 if [[ "$POWERLINE_PATH" != "" ]]; then
