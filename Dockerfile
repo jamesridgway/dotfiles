@@ -23,3 +23,5 @@ WORKDIR /home/tester/projects/dotfiles
 
 # Run setup
 RUN ./setup
+
+CMD ["/bin/bash"]

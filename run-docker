@@ -1,0 +1,3 @@
+#!/bin/bash
+docker build -t docker.james-ridgway.co.uk/dotfiles .
+docker run -it docker.james-ridgway.co.uk/dotfiles

@@ -34,16 +34,46 @@ function apt_install() {
     fi
 }
 
+function is_sudo() {
+    if groups | grep -q "\\bsudo\b"; then
+        return 0
+    fi
+    return 1
+}
+
 # --------------------------------------------------
 
 REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-echo "Running system setup"
-echo "--------------------"
-echo "Home directory: $HOME"
-echo "Dotfiles: $REPO"
+echo "Running dotfiles setup"
+echo "----------------------------------------"
 echo ""
-
+echo -e "             \e[94m||||||||||||"
+echo -e "             \e[34m88\e[94m||||||||||||"
+echo -e "             \e[34m8888\e[94m||||||||||||"
+echo -e "             \e[34m888888\e[94m||||||||||||"
+echo -e "             \e[34m88888888\e[94m||||||||||||"
+echo -e "             \e[34m8888888888\e[94m||||||||||||"
+echo -e "             \e[34m888888888888\e[94m||||||||||||"
+echo -e "  \e[94m|          \e[94m|||||||||||||\e[34m888888888888"
+echo -e "  \e[94m||         \e[34m8\e[94m||||||||||||||\e[34m88888888          \e[34mUser:\e[39m           $(whoami)"
+echo -e "  \e[94m||||       \e[34m888\e[94m||||||||||||||\e[34m8888            \e[34mHostname:\e[39m       $(hostname)"
+echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8              \e[34mDistro:\e[39m         $(lsb_release -si) $(lsb_release -sr)"
+echo -e "  \e[94m||||||||   \e[34m8888888\e[94m|||||||||||||             \e[34mKernel:\e[39m         $(uname -r)"
+echo -e "  \e[94m|||||||||  \e[34m888888888\e[94m||||||||||||||          \e[34mShell:\e[39m          $SHELL"
+echo -e "  \e[94m|||||||||||\e[34m88888888888\e[94m||||||||||||||        \e[34mCPU:\e[39m            $(sed -n 's/^model name[ \t]*: *//p' /proc/cpuinfo | uniq | sed ':a;N;$!ba;s/\n/, /g')"
+echo -e "  \e[94m|||||||||||\e[34m8888888888888\e[94m||||||||||||        \e[34mHome directory:\e[39m $HOME"
+echo -e "   \e[94m||||||||||||\e[34m888888888888\e[94m||||||||||||       \e[34mDotfiles:\e[39m       $REPO"
+echo -e "     \e[94m||||||||||||\e[34m8888888888  \e[94m||||||||||       \e[34mSudo:\e[39m           $(if is_sudo -eq 0; then echo 'Yes'; else echo 'No'; fi)"
+echo -e "       \e[94m||||||||||||\e[34m88888888   \e[94m|||||||||"
+echo -e "         \e[94m||||||||||||\e[34m888888     \e[94m|||||||"
+echo -e "           \e[94m||||||||||||\e[34m8888       \e[94m|||||"
+echo -e "             \e[94m||||||||||||\e[34m88         \e[94m|||"
+echo -e "               \e[94m||||||||||||          \e[94m||\e[39m"
+echo ""
+echo "---------------------------------------"
+echo ""
+echo ""
 echo_task "Updating submodules"
 git --git-dir="$REPO/.git" submodule init
 git --git-dir="$REPO/.git" submodule update
