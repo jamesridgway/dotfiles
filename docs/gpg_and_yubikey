@@ -1,0 +1,15 @@
+# gpg and YubiKey
+Install the following before running `setup`:
+
+    $ apt-get install gnupg-agent scdaemon pcscd pcsc-tools
+
+Ensure that `gpg2` is always used:
+
+    $ ln -s /usr/bin/gpg2 /usr/local/bin/gpg
+
+Yubico ppa:
+
+    $ sudo apt-add-repository ppa:yubico/stable
+    $ sudo apt-get update
+    $ sudo apt-get install yubikey-personalization-gui yubikey-neo-manager yubikey-personalization
+
