@@ -102,6 +102,7 @@ git --git-dir="$REPO/.git" submodule update
 # apt packages
 if command -v apt-get > /dev/null; then
     echo_task "Installing apt packages"
+    apt_install "autojump"
     apt_install "curl"
     apt_install "htop"
     apt_install "python"

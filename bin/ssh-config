@@ -31,6 +31,7 @@ while
     shift
     case "$token" in
 		(--apply)
+			mkdir -p "$HOME/.ssh/"
 			aws --region eu-west-2 s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO"/ssh/configs/
 			cat "$REPO"/ssh/configs/* > "$HOME/.ssh/config"
 			echo -e "\nSSH configs applied!"
