@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+usage()
+{
+  printf "%b" "
+Usage
+
+  ssh-config [options]
+
+Options
+
+  --apply     Apply SSH config
+  --upload    Upload SSH config
+  --help      Displays this message
+"
+}
+
+REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ".." && pwd )
+
+
+if [ $# -eq 0 ]; then
+	usage
+	exit 1
+fi
+
+while
+    (( $# > 0 ))
+  do
+    token="$*"
+    shift
+    case "$token" in
+		(--apply)
+			aws --region eu-west-2 s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO"/ssh/configs/
+			cat "$REPO"/ssh/configs/* > "$HOME/.ssh/config"
+			echo -e "\nSSH configs applied!"
+			break;
+			;;
+		(--upload)
+			aws --region eu-west-2 s3 rm --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/
+			for file in "$REPO"/ssh/configs/*
+			do
+				aws --region eu-west-2 s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
+			done
+			echo -e "\nSSH configs upload successfully!"
+			break;
+			;;
+		*)
+			usage
+			exit 1
+			;;
+  esac
+done
