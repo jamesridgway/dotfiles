@@ -26,7 +26,7 @@ function check_apt_installed() {
     return dpkg -l "$1" &> /dev/null
 }
 function apt_install() {
-    if dpkg --get-selections | grep -q "^1[[:space:]]*install$" >/dev/null; then
+    if dpkg --get-selections | grep -q "^$1[[:space:]]*install$" >/dev/null; then
         echo_sub_task "$1 already installed"
     else
         echo_sub_task "Installing $1"
@@ -41,12 +41,26 @@ function is_sudo() {
     return 1
 }
 
+WARNS=()
+function add_warn() {
+    WARNS+=("$1")
+}
+function display_warns() {
+    if [ ${#WARNS[@]} -gt 0 ]; then
+        echo -e "\n\n\e[93mWARNING:\e[39m"
+        for warn in "${WARNS[@]}"
+        do
+            echo -e " \e[33m*\e[39m $WARNS"
+        done
+    fi
+}
+
 # --------------------------------------------------
 
 REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 echo "Running dotfiles setup"
-echo "----------------------------------------"
+echo "----------------------------------------------------------------------------------------------------------------------"
 echo ""
 echo -e "             \e[94m||||||||||||"
 echo -e "             \e[34m88\e[94m||||||||||||"
@@ -55,7 +69,7 @@ echo -e "             \e[34m888888\e[94m||||||||||||"
 echo -e "             \e[34m88888888\e[94m||||||||||||"
 echo -e "             \e[34m8888888888\e[94m||||||||||||"
 echo -e "             \e[34m888888888888\e[94m||||||||||||"
-echo -e "  \e[94m|          \e[94m|||||||||||||\e[34m888888888888"
+echo -e "             \e[94m|||||||||||||\e[34m888888888888"
 echo -e "  \e[94m||         \e[34m8\e[94m||||||||||||||\e[34m88888888          \e[34mUser:\e[39m           $(whoami)"
 echo -e "  \e[94m||||       \e[34m888\e[94m||||||||||||||\e[34m8888            \e[34mHostname:\e[39m       $(hostname)"
 echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8              \e[34mDistro:\e[39m         $(lsb_release -si) $(lsb_release -sr)"
@@ -71,13 +85,21 @@ echo -e "           \e[94m||||||||||||\e[34m8888       \e[94m|||||"
 echo -e "             \e[94m||||||||||||\e[34m88         \e[94m|||"
 echo -e "               \e[94m||||||||||||          \e[94m||\e[39m"
 echo ""
-echo "---------------------------------------"
+echo "---------------------------------------------------------------------------------------------------------------------"
 echo ""
 echo ""
+
+
+echo "Executing tasks:"
+
+
+# Submodules
 echo_task "Updating submodules"
 git --git-dir="$REPO/.git" submodule init
 git --git-dir="$REPO/.git" submodule update
 
+
+# apt packages
 if command -v apt-get > /dev/null; then
     echo_task "Installing apt packages"
     apt_install "curl"
@@ -92,21 +114,29 @@ else
     echo_task "Skipping apt packages"
 fi
 
+
+# gnupg
 echo_task "Setting up gnupg config"
 mkdir -p "$HOME/.gnupg"
 ln -sf "$REPO/gnupg/gpg.conf" "$HOME/.gnupg/gpg.conf"
 ln -sf "$REPO/gnupg/scd-event" "$HOME/.gnupg/scd-event"
 chmod +x "$HOME/.gnupg/scd-event"
 
+
+# VIM
 echo_task "Setting up VIM config"
 ln -sf "$REPO/vim/.vimrc" "$HOME/.vimrc"
 
+
+# TMUX
 echo_task "Setting up TMUX config"
 ln -sf "$REPO/tmux/.tmux.conf" "$HOME/.tmux.conf"
 if [ -z "$HOME/.tmux/plugins/tpm" ]; then
 	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
 fi
 
+
+# Local ~/bin
 echo_task "Setup local bin"
 mkdir -p "$HOME/bin"
 for f in $REPO/bin/*
@@ -123,6 +153,7 @@ do
 done
 
 
+# ZSH
 echo_task "Setting up ZSH"
 if check_apt_installed "fonts-powerline"; then
     echo_sub_task "Installing powerline fonts"
@@ -131,6 +162,8 @@ if check_apt_installed "fonts-powerline"; then
     fc-cache -f
 fi
 
+
+# oh-my-zsh
 if [ -d "$HOME/.oh-my-zsh" ]; then
 	echo_sub_task "oh-my-zsh already installed"
 else
@@ -141,11 +174,15 @@ cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
 cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"
 cp "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
+
+# Git
 echo_task "Setting up git"
+git config --global user.name "James Ridgway"
 git config --global core.editor vim  &> /dev/null
 git config --global push.default current &> /dev/null
 
 
+# Gnome
 if command -v gsettings > /dev/null; then
     echo_task "Setting up gnome"
     gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
@@ -154,23 +191,47 @@ else
 fi
 
 
+# Terminator
 echo_task "Setting up terminator"
 mkdir -p "${HOME}/.config/terminator"
 cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
-powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' > /dev/null 2>&1  || true)
+
+# Powerline
+powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' || true)
 if [[ "$powerline_path" != "" ]]; then
 	echo_task "Powerline already installed"
 else
 	echo_task "Setup powerline"
-	pip install --user git+git://github.com/powerline/powerline
-	pip3 install --user git+git://github.com/powerline/powerline
+	pip install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
+	pip3 install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
 fi
 ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
 
 
+# Install AWS CLI
+if pip freeze | grep -q "awscli"; then
+    echo_task "awscli already installed"
+else
+    echo_task "Install awscli"
+    pip3 install --user awscli | sed 's/^/      /'
+fi
+
+
+# SSH Config
+if [ -f "$HOME/.aws/credentials" ]; then
+    echo_task "Applying SSH config"
+    ssh-config --apply  2>&1 | sed 's/^/      /'
+else
+    add_warn "SSH config not applied because awscli is not installed and/or AWS credentials do not exist."
+fi
+
+# Gradle
 echo_task "Setting up gradle"
 mkdir -p "$HOME/.gradle"
 ln -sf "$REPO/gradle/gradle.properties" "$HOME/.gradle/gradle.properties"
 
+
+# End script, display any warnings
+display_warns
 echo -e "\n\e[32mSetup complete\e[39m"
