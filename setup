@@ -132,8 +132,11 @@ ln -sf "$REPO/vim/.vimrc" "$HOME/.vimrc"
 # TMUX
 echo_task "Setting up TMUX config"
 ln -sf "$REPO/tmux/.tmux.conf" "$HOME/.tmux.conf"
-if [ -z "$HOME/.tmux/plugins/tpm" ]; then
-	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+if [ -d "$HOME/.tmux/plugins/tpm" ]; then
+    echo_sub_task "TPM already installed"
+else
+    echo_sub_task "TPM"
+	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" &> /dev/null
 fi
 
 
