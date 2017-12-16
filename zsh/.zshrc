@@ -6,6 +6,9 @@ export ZSH=$HOME/.oh-my-zsh
 plugins=(git autojump)
 source $ZSH/oh-my-zsh.sh
 
+# Editor
+export EDITOR="vim"
+
 # Aliases
 alias us-update="git --git-dir=$HOME/dotfiles/useful-scripts/.git pull && $HOME/projects/dotfiles/setup"
 
