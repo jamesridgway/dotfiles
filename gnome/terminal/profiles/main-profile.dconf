@@ -1,0 +1,11 @@
+[/]
+foreground-color='rgb(170,170,170)'
+visible-name='Main Profile'
+default-size-columns=120
+default-size-rows=30
+use-system-font=false
+use-theme-colors=false
+font='Inconsolata 11'
+use-theme-transparency=false
+background-color='rgb(0,0,0)'
+scrollbar-policy='always'
