@@ -197,6 +197,16 @@ else
     echo_task "Skipping gnome setup"
 fi
 
+# Fonts
+echo_task "Fonts"
+if [ -d "$HOME/.fonts" ]; then
+    echo_sub_task "Symlink already exists"
+else
+    echo_sub_task "Creating symlink and updating fc-cache"
+    ln -sf "$REPO/fonts" "$HOME/.fonts"
+    fc-cache -f
+fi
+
 
 # Terminator
 echo_task "Setting up terminator"
