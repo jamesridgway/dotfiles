@@ -32,18 +32,18 @@ while
     case "$token" in
 		(--apply)
 			mkdir -p "$HOME/.ssh/"
-			aws --region eu-west-2 s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO/ssh/configs/"
+			aws --only-show-errors --region eu-west-2 s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO/ssh/configs/"
 			cat "$REPO"/ssh/configs/* > "$HOME/.ssh/config"
-			echo -e "\nSSH configs applied!"
+			echo -e "SSH configs applied!"
 			break;
 			;;
 		(--upload)
 			aws --region eu-west-2 s3 rm --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/
 			for file in "$REPO"/ssh/configs/*
 			do
-				aws --region eu-west-2 s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
+				aws --only-show-errors --region eu-west-2 s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
 			done
-			echo -e "\nSSH configs upload successfully!"
+			echo -e "SSH configs upload successfully!"
 			break;
 			;;
 		*)

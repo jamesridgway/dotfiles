@@ -59,8 +59,7 @@ function display_warns() {
 
 REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-echo "Running dotfiles setup"
-echo "----------------------------------------------------------------------------------------------------------------------"
+echo "----------------------------------------------------------------------------------------------------------------"
 echo ""
 echo -e "             \e[94m||||||||||||"
 echo -e "             \e[34m88\e[94m||||||||||||"
@@ -85,8 +84,7 @@ echo -e "           \e[94m||||||||||||\e[34m8888       \e[94m|||||"
 echo -e "             \e[94m||||||||||||\e[34m88         \e[94m|||"
 echo -e "               \e[94m||||||||||||          \e[94m||\e[39m"
 echo ""
-echo "---------------------------------------------------------------------------------------------------------------------"
-echo ""
+echo "----------------------------------------------------------------------------------------------------------------"
 echo ""
 
 
@@ -225,7 +223,8 @@ fi
 # SSH Config
 if [ -f "$HOME/.aws/credentials" ]; then
     echo_task "Applying SSH config"
-    ssh-config --apply  2>&1 | sed 's/^/      /'
+    ssh_result=$(ssh-config --apply)
+    echo_sub_task "${ssh_result}"
 else
     add_warn "SSH config not applied because awscli is not installed and/or AWS credentials do not exist."
 fi
