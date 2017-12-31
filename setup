@@ -202,9 +202,14 @@ echo_task "Fonts"
 if [ -d "$HOME/.fonts" ]; then
     echo_sub_task "Symlink already exists"
 else
-    echo_sub_task "Creating symlink and updating fc-cache"
+    echo_sub_task "Creating symlink"
     ln -sf "$REPO/fonts" "$HOME/.fonts"
-    fc-cache -f
+    if command -v fc-cache > /dev/null; then
+        echo_sub_task "Updating fc-cache"
+        fc-cache -f
+    else
+        echo_sub_task "Skipping fc-cache"
+    fi
 fi
 
 
