@@ -1,0 +1,25 @@
+# Gnome 3 - based on https://blog.samalik.com/make-your-gnome-title-bars-smaller/
+.header-bar.default-decoration {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 0.8em;
+}
+.header-bar.default-decoration .button.titlebutton {
+    padding: 0px;
+}
+
+
+# --------------------------------------------------
+
+
+# Gnome 3.20+ - based on https://blog.samalik.com/make-your-gnome-title-bar-smaller-fedora-24-update/
+window.ssd headerbar.titlebar {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: 0;
+}
+window.ssd headerbar.titlebar button.titlebutton {
+    padding: 0px;
+    min-height: 0;
+    min-width: 0;
+}

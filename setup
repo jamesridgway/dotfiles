@@ -193,6 +193,10 @@ if command -v gsettings > /dev/null; then
 
     echo_sub_task "Terminal"
     dconf load /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/ < "$REPO/gnome/terminal/profiles/main-profile.dconf"
+
+    echo_sub_task "gtk-3.0"
+    mkdir -p "$HOME/.config/gtk-3.0"
+    ln -sf "$REPO/gnome/gtk-3.0/gtk.css" "$HOME/.config/gtk-3.0/gtk.css"
 else
     echo_task "Skipping gnome setup"
 fi
