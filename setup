@@ -98,21 +98,24 @@ git --git-dir="$REPO/.git" submodule update
 
 
 # apt packages
-if command -v apt-get > /dev/null; then
-    echo_task "Installing apt packages"
-    apt_install "autojump"
-    apt_install "curl"
-    apt_install "htop"
-    apt_install "python"
-    apt_install "python-pip"
-    apt_install "python3"
-    apt_install "python3-pip"
-    apt_install "tmux"
-    apt_install "vim"
+if is_sudo -eq 0; then
+    if command -v apt-get > /dev/null; then
+        echo_task "Installing apt packages"
+        apt_install "autojump"
+        apt_install "curl"
+        apt_install "htop"
+        apt_install "python"
+        apt_install "python-pip"
+        apt_install "python3"
+        apt_install "python3-pip"
+        apt_install "tmux"
+        apt_install "vim"
+    else
+        echo_task "Skipping apt packages"
+    fi
 else
-    echo_task "Skipping apt packages"
+    echo_task "Skipping apt packages (not sudo)"
 fi
-
 
 # gnupg
 echo_task "Setting up gnupg config"
