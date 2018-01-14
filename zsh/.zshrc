@@ -10,7 +10,8 @@ source $ZSH/oh-my-zsh.sh
 export EDITOR="vim"
 
 # Aliases
-alias us-update="git --git-dir=$HOME/dotfiles/useful-scripts/.git pull && $HOME/projects/dotfiles/setup"
+# SSH honest
+alias ssh-hosts="grep -P \"^Host ([^*]+)$\" $HOME/.ssh/config | sed 's/Host //'"
 
 # PATH
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
