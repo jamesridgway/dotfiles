@@ -10,7 +10,7 @@ source $ZSH/oh-my-zsh.sh
 export EDITOR="vim"
 
 # Aliases
-# SSH honest
+# List SSH hosts from SSH config
 alias ssh-hosts="grep -P \"^Host ([^*]+)$\" $HOME/.ssh/config | sed 's/Host //'"
 
 # PATH
