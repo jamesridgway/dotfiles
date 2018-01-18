@@ -33,7 +33,7 @@ while
 		(--apply)
 			rm -f "$REPO/ssh/configs/*"
 			rm -f "$HOME/.ssh/config"
-			aws --only-show-errors --region eu-west-2 s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO/ssh/configs/"
+			aws --profile personal --only-show-errors s3 cp --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs/ "$REPO/ssh/configs/"
 
 			mkdir -p "$HOME/.ssh/"
 			cat "$REPO"/ssh/configs/* > "$HOME/.ssh/config"
@@ -41,7 +41,7 @@ while
 			break;
 			;;
 		(--upload)
-			aws --region eu-west-2 s3 rm --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs
+			aws --profile personal s3 rm --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs
 			for file in "$REPO"/ssh/configs/*
 			do
 				aws --only-show-errors --region eu-west-2 s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
