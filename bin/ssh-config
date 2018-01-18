@@ -44,7 +44,7 @@ while
 			aws --profile personal s3 rm --recursive s3://dotfiles.james-ridgway.co.uk/ssh/configs
 			for file in "$REPO"/ssh/configs/*
 			do
-				aws --only-show-errors --region eu-west-2 s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
+				aws --profile personal --only-show-errors s3 cp "$file" s3://dotfiles.james-ridgway.co.uk/ssh/configs/
 			done
 			echo -e "SSH configs upload successfully!"
 			break;
