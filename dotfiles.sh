@@ -44,4 +44,4 @@ fi
 
 
 echo -e "\n\nThe dotfiles setup script will now be run...\n\n"
-eval "$INSTALL_PATH/dotfiles"
+eval "$INSTALL_PATH/dotfiles/setup"
