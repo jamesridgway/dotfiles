@@ -172,7 +172,7 @@ if [[ "$SHELL" =~ .*zsh$ ]]; then
     echo_task "ZSH is the current shell"
 else
     echo_task "Changing shell from ${SHELL} to zsh"
-    chsh -s $(which zsh)
+    sudo chsh -s $(which zsh)
     echo -e "\n\n\e[93mWARNING:\e[39m: Please log out and log back in for your shell change to take affect and re-run the setup script."
     exit 1
 fi
