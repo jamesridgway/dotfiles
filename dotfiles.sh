@@ -43,12 +43,5 @@ else
 fi
 
 
-echo -e "\n\nThe dotfiles setup script will now be run..."
-
-
-if is_sudo -eq 0; then
-	sudo "$INSTALL_PATH/dotfiles/setup"
-else
-	echo "You are not a sudoer, the setup script will be run normally (some packages may not be installed)."
-	eval "$INSTALL_PATH/dotfiles"
-fi
+echo -e "\n\nThe dotfiles setup script will now be run...\n\n"
+eval "$INSTALL_PATH/dotfiles"
