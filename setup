@@ -164,6 +164,8 @@ apt_install fonts-powerline
 
 
 # oh-my-zsh
+ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 if [[ "$SHELL" =~ .*zsh$ ]]; then
     echo_task "ZSH is the current shell"
 else
@@ -179,8 +181,6 @@ else
 	(sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ])
 fi
 cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
-cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-cp "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
 
 # Git
