@@ -93,7 +93,7 @@ echo "Executing tasks:"
 
 # Submodules
 echo_task "Updating submodules"
-git --git-dir="$REPO/.git" submodule update --init --recursive
+(cd "$REPO" && git submodule update --init --recursive)
 
 # apt packages
 if is_sudo -eq 0; then

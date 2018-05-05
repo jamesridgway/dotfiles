@@ -22,7 +22,7 @@ function is_sudo() {
 INSTALL_PATH="$HOME/projects"
 
 echo -e "This is a self-install script for James Ridgway's dotfiles.\n\n"
-sleep 3
+
 
 echo "git is required to clone the repository."
 if command -v apt-get > /dev/null; then
@@ -35,7 +35,6 @@ fi
 
 mkdir -p "$INSTALL_PATH"
 echo "Cloning the repository to: $INSTALL_PATH/dotfiles"
-sleep 3
 
 if [ -d "$INSTALL_PATH/dotfiles" ]; then
     echo "dotfiles already exists"
@@ -44,11 +43,10 @@ else
 fi
 
 
-echo "The dotfiles setup script will now be run..."
+echo -e "\n\nThe dotfiles setup script will now be run..."
 
 
 if is_sudo -eq 0; then
-	sleep 3
 	sudo "$INSTALL_PATH/dotfiles/setup"
 else
 	echo "You are not a sudoer, the setup script will be run normally (some packages may not be installed)."
