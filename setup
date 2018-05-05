@@ -159,12 +159,8 @@ done
 
 # ZSH
 echo_task "Setting up ZSH"
-if check_apt_installed "fonts-powerline"; then
-    echo_sub_task "Installing powerline fonts"
-    apt_install fonts-powerline
-    echo_sub_task "Re-building font cache"
-    fc-cache -f
-fi
+echo_sub_task "Installing powerline fonts"
+apt_install fonts-powerline
 
 
 # oh-my-zsh
@@ -173,14 +169,14 @@ if [[ "$SHELL" =~ .*zsh$ ]]; then
 else
     echo_task "Changing shell from ${SHELL} to zsh"
     sudo chsh -s $(which zsh)
-    echo -e "\n\n\e[93mWARNING:\e[39m: Please log out and log back in for your shell change to take affect and re-run the setup script."
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please reboot your computer for your shell change to take affect and re-run the setup script."
     exit 1
 fi
 if [ -d "$HOME/.oh-my-zsh" ]; then
 	echo_sub_task "oh-my-zsh already installed"
 else
 	echo_sub_task "Installing oh-my-zsh"
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ]
+	(sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ])
 fi
 cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
 cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"

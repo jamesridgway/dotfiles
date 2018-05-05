@@ -27,7 +27,7 @@ echo -e "This is a self-install script for James Ridgway's dotfiles.\n\n"
 echo "git is required to clone the repository."
 if command -v apt-get > /dev/null; then
     if is_sudo -eq 0; then
-	    apt_install "git"   
+	    apt_install "git"
 	else
 	    echo "ERROR: 'git' is not installed and you are not a sudoer. Please install git."
 	fi
