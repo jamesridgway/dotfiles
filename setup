@@ -156,33 +156,6 @@ do
         ln -sf "$REPO/scripts/bin/$bin_filename" "$HOME/bin/$bin_filename"
 done
 
-
-# ZSH
-echo_task "Setting up ZSH"
-echo_sub_task "Installing powerline fonts"
-apt_install fonts-powerline
-
-
-# oh-my-zsh
-ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
-if [[ "$SHELL" =~ .*zsh$ ]]; then
-    echo_task "ZSH is the current shell"
-else
-    echo_task "Changing shell from ${SHELL} to zsh"
-    sudo chsh -s $(which zsh) "$USER"
-    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
-    exit 1
-fi
-if [ -d "$HOME/.oh-my-zsh" ]; then
-	echo_sub_task "oh-my-zsh already installed"
-else
-	echo_sub_task "Installing oh-my-zsh"
-	(sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ])
-fi
-cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
-
-
 # Git
 echo_task "Setting up git"
 git config --global user.name "James Ridgway"
@@ -230,6 +203,8 @@ cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
 
 # Powerline
+echo_sub_task "Installing powerline fonts"
+apt_install fonts-powerline
 powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' || true)
 if [[ "$powerline_path" != "" ]]; then
 	echo_task "Powerline already installed"
@@ -239,6 +214,20 @@ else
 	pip3 install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
 fi
 ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
+
+
+# ZSH
+echo_task "Setting up ZSH"
+ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
+if [[ "$SHELL" =~ .*zsh$ ]]; then
+    echo_task "ZSH is the current shell"
+else
+    echo_task "Changing shell from ${SHELL} to zsh"
+    sudo chsh -s $(which zsh) "$USER"
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
+    exit 1
+fi
 
 
 # Install AWS CLI
