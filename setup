@@ -96,7 +96,6 @@ echo_task "Updating submodules"
 git --git-dir="$REPO/.git" submodule init
 git --git-dir="$REPO/.git" submodule update
 
-
 # apt packages
 if is_sudo -eq 0; then
     if command -v apt-get > /dev/null; then
@@ -110,6 +109,7 @@ if is_sudo -eq 0; then
         apt_install "python3-pip"
         apt_install "tmux"
         apt_install "vim"
+        apt_install "zsh"
     else
         echo_task "Skipping apt packages"
     fi
@@ -162,13 +162,18 @@ done
 echo_task "Setting up ZSH"
 if check_apt_installed "fonts-powerline"; then
     echo_sub_task "Installing powerline fonts"
-    sudo apt-get install -y -q fonts-powerline
+    apt_install fonts-powerline
     echo_sub_task "Re-building font cache"
     fc-cache -f
 fi
 
 
 # oh-my-zsh
+if [ -z "$ZSH_VERSION" ]; then
+    echo_task "Changing shell from ${SHELL} to zsh"
+    chsh -s $(which zsh)
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please log out and log back in for your shell change to take affect and re-run the setup script."
+    exit 1
 if [ -d "$HOME/.oh-my-zsh" ]; then
 	echo_sub_task "oh-my-zsh already installed"
 else
