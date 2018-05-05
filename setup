@@ -171,7 +171,7 @@ if [[ "$SHELL" =~ .*zsh$ ]]; then
 else
     echo_task "Changing shell from ${SHELL} to zsh"
     sudo chsh -s $(which zsh) "$USER"
-    echo -e "\n\n\e[93mWARNING:\e[39m: Please reboot your computer for your shell change to take affect and re-run the setup script."
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
     exit 1
 fi
 if [ -d "$HOME/.oh-my-zsh" ]; then
