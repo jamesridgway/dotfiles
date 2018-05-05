@@ -215,21 +215,6 @@ else
 fi
 ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
 
-
-# ZSH
-echo_task "Setting up ZSH"
-ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
-if [[ "$SHELL" =~ .*zsh$ ]]; then
-    echo_task "ZSH is the current shell"
-else
-    echo_task "Changing shell from ${SHELL} to zsh"
-    sudo chsh -s $(which zsh) "$USER"
-    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
-    exit 1
-fi
-
-
 # Install AWS CLI
 if pip freeze | grep -q "awscli"; then
     echo_task "awscli already installed"
@@ -253,6 +238,18 @@ echo_task "Setting up gradle"
 mkdir -p "$HOME/.gradle"
 ln -sf "$REPO/gradle/gradle.properties" "$HOME/.gradle/gradle.properties"
 
+# ZSH
+echo_task "Setting up ZSH"
+ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
+if [[ "$SHELL" =~ .*zsh$ ]]; then
+    echo_task "ZSH is the current shell"
+else
+    echo_task "Changing shell from ${SHELL} to zsh"
+    sudo chsh -s $(which zsh) "$USER"
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
+    exit 1
+fi
 
 # End script, display any warnings
 display_warns
