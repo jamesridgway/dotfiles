@@ -93,8 +93,7 @@ echo "Executing tasks:"
 
 # Submodules
 echo_task "Updating submodules"
-git --git-dir="$REPO/.git" submodule init
-git --git-dir="$REPO/.git" submodule update
+git --git-dir="$REPO/.git" submodule update --init --recursive
 
 # apt packages
 if is_sudo -eq 0; then
@@ -174,6 +173,7 @@ if [ -z "$ZSH_VERSION" ]; then
     chsh -s $(which zsh)
     echo -e "\n\n\e[93mWARNING:\e[39m: Please log out and log back in for your shell change to take affect and re-run the setup script."
     exit 1
+fi
 if [ -d "$HOME/.oh-my-zsh" ]; then
 	echo_sub_task "oh-my-zsh already installed"
 else
