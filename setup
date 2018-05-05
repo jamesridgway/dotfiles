@@ -240,8 +240,6 @@ ln -sf "$REPO/gradle/gradle.properties" "$HOME/.gradle/gradle.properties"
 
 # ZSH
 echo_task "Setting up ZSH"
-ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 if [[ "$SHELL" =~ .*zsh$ ]]; then
     echo_task "ZSH is the current shell"
 else
@@ -250,7 +248,17 @@ else
     echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
     exit 1
 fi
+if [ -d "$HOME/.oh-my-zsh" ]; then 
+   echo_sub_task "oh-my-zsh already installed" 
+else   
+   echo_sub_task "Installing oh-my-zsh"    
+   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"<<<"exit" || [ -d "$HOME/.oh-my-zsh" ]
+   rm -rf "$HOME/.zshrc"
+fi 
+ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
+ln -sf "$REPO/zsh/custom" "$HOME/.oh-my-zsh/custom"
 # End script, display any warnings
 display_warns
 echo -e "\n\e[32mSetup complete\e[39m"

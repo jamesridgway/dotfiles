@@ -1,7 +1,10 @@
-# Path to your oh-my-zsh installation.
-
-# autojump
-source /usr/share/autojump/autojump.sh
+# Oh-my-zsh setup  
+export ZSH=$HOME/.oh-my-zsh  
+if [ -f "$ZSH/oh-my-zsh.sh" ]; then
+  ZSH_THEME="jagnoster" 
+  plugins=(git autojump) 
+  source $ZSH/oh-my-zsh.sh
+fi
 
 # Editor
 export EDITOR="vim"
