@@ -1,5 +1,8 @@
 # Path to your oh-my-zsh installation.
 
+# autojump
+source /usr/share/autojump/autojump.sh
+
 # Editor
 export EDITOR="vim"
 
