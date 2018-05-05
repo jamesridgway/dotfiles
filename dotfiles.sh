@@ -6,9 +6,9 @@ function check_apt_installed() {
 }
 function apt_install() {
     if dpkg --get-selections | grep -q "^$1[[:space:]]*install$" >/dev/null; then
-    	echo "  $1 is already installed"
+    	echo "$1 is already installed"
     else
-    	echo "  $1 is being installed. Sudo password may be needed"
+    	echo "$1 is being installed. Sudo password may be needed"
         sudo apt-get -qq install -y "$1"
     fi
 }
@@ -35,7 +35,7 @@ mkdir -p "$HOME/projects"
 echo "Cloning the repository to: $HOME/projects/dotfiles"
 sleep 3
 
-git clone git@github.com:jamesridgway/dotfiles.git "$HOME/projects/dotfiles"
+git clone https://github.com/jamesridgway/dotfiles.git "$HOME/projects/dotfiles"
 
 
 echo "The dotfiles setup script will now be run..."
