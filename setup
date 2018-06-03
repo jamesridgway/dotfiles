@@ -158,7 +158,6 @@ done
 
 # Git
 echo_task "Setting up git"
-git config --global user.name "James Ridgway"
 git config --global core.editor vim  &> /dev/null
 git config --global push.default current &> /dev/null
 
