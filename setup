@@ -168,6 +168,7 @@ if command -v gsettings > /dev/null; then
 
     echo_sub_task "Nautilus"
     gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
+    gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 24
 
     echo_sub_task "Terminal"
     dconf load /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/ < "$REPO/gnome/terminal/profiles/main-profile.dconf"
