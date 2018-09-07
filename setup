@@ -257,7 +257,7 @@ fi
 ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
 ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
-ln -sf "$REPO/zsh/custom" "$HOME/.oh-my-zsh/custom"
+ln -sf "$REPO/zsh/custom/themes/jagnoster.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/jagnoster.zsh-theme"
 # End script, display any warnings
 display_warns
 echo -e "\n\e[32mSetup complete\e[39m"
