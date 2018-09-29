@@ -137,6 +137,7 @@ if [ -d "$HOME/.tmux/plugins/tpm" ]; then
 else
     echo_sub_task "TPM"
 	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" &> /dev/null
+    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
 fi
 
 
