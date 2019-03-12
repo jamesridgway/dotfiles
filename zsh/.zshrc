@@ -18,12 +18,9 @@ export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export PATH="$PATH:$HOME/.local/bin"
 export PATH="$PATH:$HOME/bin"
 
-# Floow laptop
-alias floow-pass="PASSWORD_STORE_DIR=$HOME/.floowpass pass"
-
-# Floow laptop - add gems to path
-if [ -d "$HOME/.gem/ruby/2.1.0/bin" ]; then
-    export PATH="$PATH:$HOME/.gem/ruby/2.1.0/bin"
+# Android Sdk
+if [ -d "$HOME/Android/Sdk" ]; then
+    export ANDROID_HOME="$HOME/Android/Sdk"
 fi
 
 # Go path
