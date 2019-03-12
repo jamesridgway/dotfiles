@@ -93,9 +93,7 @@ echo "Executing tasks:"
 
 # Submodules
 echo_task "Updating submodules"
-git --git-dir="$REPO/.git" submodule init
-git --git-dir="$REPO/.git" submodule update
-
+(cd "$REPO" && git submodule update --init --recursive)
 
 # apt packages
 if is_sudo -eq 0; then
@@ -110,6 +108,7 @@ if is_sudo -eq 0; then
         apt_install "python3-pip"
         apt_install "tmux"
         apt_install "vim"
+        apt_install "zsh"
     else
         echo_task "Skipping apt packages"
     fi
@@ -138,6 +137,7 @@ if [ -d "$HOME/.tmux/plugins/tpm" ]; then
 else
     echo_sub_task "TPM"
 	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" &> /dev/null
+    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
 fi
 
 
@@ -157,32 +157,8 @@ do
         ln -sf "$REPO/scripts/bin/$bin_filename" "$HOME/bin/$bin_filename"
 done
 
-
-# ZSH
-echo_task "Setting up ZSH"
-if check_apt_installed "fonts-powerline"; then
-    echo_sub_task "Installing powerline fonts"
-    sudo apt-get install -y -q fonts-powerline
-    echo_sub_task "Re-building font cache"
-    fc-cache -f
-fi
-
-
-# oh-my-zsh
-if [ -d "$HOME/.oh-my-zsh" ]; then
-	echo_sub_task "oh-my-zsh already installed"
-else
-	echo_sub_task "Installing oh-my-zsh"
-	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" || [ -d "$HOME/.oh-my-zsh" ]
-fi
-cp -r "$REPO/zsh/custom" "$HOME/.oh-my-zsh/"
-cp "$REPO/zsh/.zshrc" "$HOME/.zshrc"
-cp "$REPO/zsh/.zshenv" "$HOME/.zshenv"
-
-
 # Git
 echo_task "Setting up git"
-git config --global user.name "James Ridgway"
 git config --global core.editor vim  &> /dev/null
 git config --global push.default current &> /dev/null
 
@@ -193,6 +169,7 @@ if command -v gsettings > /dev/null; then
 
     echo_sub_task "Nautilus"
     gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
+    gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 24
 
     echo_sub_task "Terminal"
     dconf load /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/ < "$REPO/gnome/terminal/profiles/main-profile.dconf"
@@ -227,6 +204,8 @@ cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
 
 # Powerline
+echo_sub_task "Installing powerline fonts"
+apt_install fonts-powerline
 powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' || true)
 if [[ "$powerline_path" != "" ]]; then
 	echo_task "Powerline already installed"
@@ -236,7 +215,6 @@ else
 	pip3 install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
 fi
 ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
-
 
 # Install AWS CLI
 if pip freeze | grep -q "awscli"; then
@@ -261,7 +239,27 @@ echo_task "Setting up gradle"
 mkdir -p "$HOME/.gradle"
 ln -sf "$REPO/gradle/gradle.properties" "$HOME/.gradle/gradle.properties"
 
+# ZSH
+echo_task "Setting up ZSH"
+if [[ "$SHELL" =~ .*zsh$ ]]; then
+    echo_task "ZSH is the current shell"
+else
+    echo_task "Changing shell from ${SHELL} to zsh"
+    sudo chsh -s $(which zsh) "$USER"
+    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
+    exit 1
+fi
+if [ -d "$HOME/.oh-my-zsh" ]; then
+   echo_sub_task "oh-my-zsh already installed"
+else
+   echo_sub_task "Installing oh-my-zsh"
+   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"<<<"exit" || [ -d "$HOME/.oh-my-zsh" ]
+   rm -rf "$HOME/.zshrc"
+fi
+ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
+ln -sf "$REPO/zsh/custom/themes/jagnoster.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/jagnoster.zsh-theme"
 # End script, display any warnings
 display_warns
 echo -e "\n\e[32mSetup complete\e[39m"

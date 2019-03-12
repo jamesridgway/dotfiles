@@ -17,7 +17,11 @@ This is largely achieved by symlinking dotfiles in this repository to those in t
 This repository has been broken down into a folder structure for each tool that I use.
 
 ## Installation
-Run `./setup`
+Run:
+
+    curl -sSL https://jmsr.io/dotfiles.sh | bash
+
+Or, if you have cloned the repository run `./setup`.
 
 ## Components
 In most cases, each tool has it's own folder, which is true of:
