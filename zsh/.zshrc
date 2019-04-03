@@ -1,8 +1,8 @@
-# Oh-my-zsh setup  
-export ZSH=$HOME/.oh-my-zsh  
+# Oh-my-zsh setup
+export ZSH=$HOME/.oh-my-zsh
 if [ -f "$ZSH/oh-my-zsh.sh" ]; then
-  ZSH_THEME="jagnoster" 
-  plugins=(git autojump) 
+  ZSH_THEME="jagnoster"
+  plugins=(git autojump)
   source $ZSH/oh-my-zsh.sh
 fi
 
@@ -12,7 +12,7 @@ export EDITOR="vim"
 # Aliases
 # List SSH hosts from SSH config
 alias ssh-hosts="grep -P \"^Host ([^*]+)$\" $HOME/.ssh/config | sed 's/Host //'"
-
+alias ec2-ls='aws ec2 describe-instances --query "Reservations[].Instances[].{Name: Tags[?Key=='"'"'Name'"'"'] | [0].Value, InstanceId: InstanceId, PrivateIpAddress: PrivateIpAddress, InstanceTyp: InstanceType, State: State.Name}"'
 # PATH
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export PATH="$PATH:$HOME/.local/bin"
