@@ -126,17 +126,15 @@ echo "Executing tasks:"
 echo_task "Updating submodules"
 (cd "$REPO" && git submodule update --init --recursive)
 
-if command -v brew > /dev/null; then
-    echo_task "Brew has been installed"
-else
-    echo_task "Please install brew - https://brew.sh/"
-    exit 1
-fi
-
 if is_macos -eq 1; then
-    echo_task "Installing brew packages"
-    brew_install "python3"
-    brew_install "tmux"
+    if command -v brew > /dev/null; then
+        echo_task "Installing brew packages"
+        brew_install "python3"
+        brew_install "tmux"
+    else
+        echo -e "\n\n\nPlease install brew - https://brew.sh/"
+        exit 0
+    fi
 fi
 
 
