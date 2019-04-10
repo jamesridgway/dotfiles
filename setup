@@ -130,7 +130,7 @@ if command -v brew > /dev/null; then
     echo_task "Brew has been installed"
 else
     echo_task "Please install brew - https://brew.sh/"
-    return 1
+    exit 1
 fi
 
 if is_macos -eq 1; then
