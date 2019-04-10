@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 error() {
@@ -34,11 +34,42 @@ function apt_install() {
     fi
 }
 
+function brew_install() {
+    if brew ls --versions myformula > /dev/null; then
+        echo_sub_task "$1 already installed"
+    else
+        echo_sub_task "Installing $1"
+        brew install "$1"
+    fi
+}
+
 function is_sudo() {
     if groups | grep -q "\\bsudo\b"; then
         return 0
     fi
     return 1
+}
+
+function is_macos() {
+    if [ "$(uname -s)" = "Darwin\n" ]; then
+        return 1
+    fi
+    return 0
+}
+
+function get_distribution() {
+    if command -v apt-get > /dev/null; then
+        echo "$(lsb_release -si) $(lsb_release -sr)"
+    fi
+    echo "$(uname -s)"
+}
+
+function get_cpuinfo() {
+    if is_macos -eq 1; then
+        echo "$(sysctl -n machdep.cpu.brand_string)"
+    else
+        echo "$(sed -n 's/^model name[ \t]*: *//p' /proc/cpuinfo | uniq | sed ':a;N;$!ba;s/\n/, /g')"
+    fi
 }
 
 WARNS=()
@@ -71,10 +102,10 @@ echo -e "             \e[34m888888888888\e[94m||||||||||||"
 echo -e "             \e[94m|||||||||||||\e[34m888888888888"
 echo -e "  \e[94m||         \e[34m8\e[94m||||||||||||||\e[34m88888888          \e[34mUser:\e[39m           $(whoami)"
 echo -e "  \e[94m||||       \e[34m888\e[94m||||||||||||||\e[34m8888            \e[34mHostname:\e[39m       $(hostname)"
-echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8              \e[34mDistro:\e[39m         $(lsb_release -si) $(lsb_release -sr)"
+echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8              \e[34mDistro:\e[39m         $(get_distribution)"
 echo -e "  \e[94m||||||||   \e[34m8888888\e[94m|||||||||||||             \e[34mKernel:\e[39m         $(uname -r)"
 echo -e "  \e[94m|||||||||  \e[34m888888888\e[94m||||||||||||||          \e[34mShell:\e[39m          $SHELL"
-echo -e "  \e[94m|||||||||||\e[34m88888888888\e[94m||||||||||||||        \e[34mCPU:\e[39m            $(sed -n 's/^model name[ \t]*: *//p' /proc/cpuinfo | uniq | sed ':a;N;$!ba;s/\n/, /g')"
+echo -e "  \e[94m|||||||||||\e[34m88888888888\e[94m||||||||||||||        \e[34mCPU:\e[39m            $(get_cpuinfo)"
 echo -e "  \e[94m|||||||||||\e[34m8888888888888\e[94m||||||||||||        \e[34mHome directory:\e[39m $HOME"
 echo -e "   \e[94m||||||||||||\e[34m888888888888\e[94m||||||||||||       \e[34mDotfiles:\e[39m       $REPO"
 echo -e "     \e[94m||||||||||||\e[34m8888888888  \e[94m||||||||||       \e[34mSudo:\e[39m           $(if is_sudo -eq 0; then echo 'Yes'; else echo 'No'; fi)"
@@ -94,6 +125,20 @@ echo "Executing tasks:"
 # Submodules
 echo_task "Updating submodules"
 (cd "$REPO" && git submodule update --init --recursive)
+
+if command -v brew > /dev/null; then
+    echo_task "Brew has been installed"
+else
+    echo_task "Please install brew - https://brew.sh/"
+    return 1
+fi
+
+if is_macos -eq 1; then
+    echo_task "Installing brew packages"
+    brew_install "python3"
+    brew_install "tmux"
+fi
+
 
 # apt packages
 if is_sudo -eq 0; then
@@ -204,8 +249,10 @@ cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
 
 # Powerline
-echo_sub_task "Installing powerline fonts"
-apt_install fonts-powerline
+if command -v dpkg > /dev/null; then
+    echo_sub_task "Installing powerline fonts"
+    apt_install fonts-powerline
+fi
 powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' || true)
 if [[ "$powerline_path" != "" ]]; then
 	echo_task "Powerline already installed"
@@ -214,7 +261,12 @@ else
 	pip install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
 	pip3 install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
 fi
-ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
+if is_macos -eq 1; then
+    mkdir -p "$HOME/Library/Python/3.7/lib/python/site-packages/scripts"
+    ln -sf "$REPO/config/powerline" "$HOME/Library/Python/3.7/lib/python/site-packages/scripts/powerline-config"
+else
+    ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
+fi
 
 # Install AWS CLI
 if pip freeze | grep -q "awscli"; then
