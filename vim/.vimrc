@@ -17,3 +17,5 @@ map <F6> :set number!<CR>
 " Highlight whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
+
+set backspace=indent,eol,start
