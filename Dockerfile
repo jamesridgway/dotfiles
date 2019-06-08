@@ -1,5 +1,5 @@
-FROM ubuntu:16.04
-MAINTAINER James Ridgway <myself@james-ridgway.co.uk>
+FROM ubuntu:18.04
+MAINTAINER James Ridgway <james@jamesridgway.co.uk>
 
 # OS updates and install
 RUN apt-get -qq update

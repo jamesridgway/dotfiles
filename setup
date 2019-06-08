@@ -52,20 +52,20 @@ function is_sudo() {
 
 function is_macos() {
     if [ "$(uname -s)" = "Darwin\n" ]; then
-        return 1
+        return 0
     fi
-    return 0
+    return 1
 }
 
 function get_distribution() {
-    if command -v apt-get > /dev/null; then
+    if command -v lsb_release > /dev/null; then
         echo "$(lsb_release -si) $(lsb_release -sr)"
     fi
     echo "$(uname -s)"
 }
 
 function get_cpuinfo() {
-    if is_macos -eq 1; then
+    if is_macos; then
         echo "$(sysctl -n machdep.cpu.brand_string)"
     else
         echo "$(sed -n 's/^model name[ \t]*: *//p' /proc/cpuinfo | uniq | sed ':a;N;$!ba;s/\n/, /g')"
@@ -295,7 +295,7 @@ if [[ "$SHELL" =~ .*zsh$ ]]; then
     echo_task "ZSH is the current shell"
 else
     echo_task "Changing shell from ${SHELL} to zsh"
-    sudo chsh -s $(which zsh) "$USER"
+    sudo chsh -s "$(which zsh)" "$USER"
     echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
     exit 1
 fi
