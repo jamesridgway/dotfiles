@@ -61,3 +61,17 @@ else
     fi
   fi
 fi
+
+# Terraform caching
+mkdir -p "${HOME}/.terraform.d/plugin-cache"
+export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
+
+# tabtab source for serverless package
+# uninstall by removing these lines or running `tabtab uninstall serverless`
+[[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/serverless.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/serverless.zsh
+# tabtab source for sls package
+# uninstall by removing these lines or running `tabtab uninstall sls`
+[[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/sls.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/sls.zsh
+# tabtab source for slss package
+# uninstall by removing these lines or running `tabtab uninstall slss`
+[[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh
