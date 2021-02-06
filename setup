@@ -145,8 +145,6 @@ if is_sudo -eq 0; then
         apt_install "autojump"
         apt_install "curl"
         apt_install "htop"
-        apt_install "python"
-        apt_install "python-pip"
         apt_install "python3"
         apt_install "python3-pip"
         apt_install "tmux"
