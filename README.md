@@ -7,7 +7,7 @@ I grew tired of having to setup and customise my system to suit my needs everyti
 
 This dotfiles repository aims to eliminate the need for any manual configuration. Keeping configurations in-sync between machines is now also effortless.
 
-![Dotfiles setup script screenshhot](https://files.james-ridgway.co.uk/dotfiles.gif)
+![Dotfiles setup script screenshhot](https://files.jamesridgway.co.uk/dotfiles.gif)
 
 ## Approach
 There is a single `./setup` script which is run as the installation process. This script will apply any changes.
