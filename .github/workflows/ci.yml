@@ -1,0 +1,15 @@
+
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: bundle install
+    - name: Test Kitchen
+      run: kitchen test
