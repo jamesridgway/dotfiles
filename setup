@@ -47,6 +47,9 @@ function is_sudo() {
     if groups | grep -q "\\bsudo\b"; then
         return 0
     fi
+    if groups | grep -q "\\broot\b"; then
+        return 0
+    fi
     return 1
 }
 
@@ -141,6 +144,8 @@ fi
 # apt packages
 if is_sudo -eq 0; then
     if command -v apt-get > /dev/null; then
+        echo_task "Updating apt"
+        sudo apt update -qq
         echo_task "Installing apt packages"
         apt_install "autojump"
         apt_install "curl"
@@ -208,12 +213,12 @@ git config --global push.default current &> /dev/null
 if command -v gsettings > /dev/null; then
     echo_task "Setting up gnome"
 
-    echo_sub_task "Nautilus"
-    gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
-    gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 24
+    # echo_sub_task "Nautilus"
+    # gsettings set org.gnome.nautilus.preferences default-folder-viewer "list-view"
+    # gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 24
 
-    echo_sub_task "Terminal"
-    dconf load /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/ < "$REPO/gnome/terminal/profiles/main-profile.dconf"
+    # echo_sub_task "Terminal"
+    # dconf load /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/ < "$REPO/gnome/terminal/profiles/main-profile.dconf"
 
     echo_sub_task "gtk-3.0"
     mkdir -p "$HOME/.config/gtk-3.0"
@@ -292,22 +297,25 @@ echo_task "Setting up ZSH"
 if [[ "$SHELL" =~ .*zsh$ ]]; then
     echo_task "ZSH is the current shell"
 else
-    echo_task "Changing shell from ${SHELL} to zsh"
-    sudo chsh -s "$(which zsh)" "$USER"
-    echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect and re-run the setup script."
-    exit 1
+    if [[ $EUID -ne 0 ]]; then
+        echo_task "Changing shell from ${SHELL} to zsh"
+        sudo chsh -s "$(which zsh)" "$USER"
+        echo -e "\n\n\e[93mWARNING:\e[39m: Please logout and log back in for your shell change to take affect."
+    fi
 fi
 if [ -d "$HOME/.oh-my-zsh" ]; then
    echo_sub_task "oh-my-zsh already installed"
 else
    echo_sub_task "Installing oh-my-zsh"
-   sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"<<<"exit" || [ -d "$HOME/.oh-my-zsh" ]
+   zsh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"<<<"exit" || [ -d "$HOME/.oh-my-zsh" ]
    rm -rf "$HOME/.zshrc"
 fi
 ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
 ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
 ln -sf "$REPO/zsh/custom/themes/jagnoster.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/jagnoster.zsh-theme"
+
 # End script, display any warnings
 display_warns
 echo -e "\n\e[32mSetup complete\e[39m"
+exit 0

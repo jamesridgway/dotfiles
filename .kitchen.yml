@@ -1,0 +1,22 @@
+#.kitchen.yml
+driver:
+  name: vagrant
+  synced_folders:
+    - ['.', '/home/vagrant/dotfiles']
+  customize:
+    memory: 1024
+
+platforms:
+  - name: ubuntu-20.04
+
+provisioner:
+  name: shell
+  script: 'test/scripts/setup.sh'
+  root_path: '/home/vagrant/'
+
+suites:
+  - name: default
+    verifier:
+      name: inspec
+      inspec_tests:
+        - test/integration/default
