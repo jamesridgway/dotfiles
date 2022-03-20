@@ -95,17 +95,17 @@ REPO=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 echo "----------------------------------------------------------------------------------------------------------------"
 echo ""
-echo -e "             \e[94m||||||||||||"
-echo -e "             \e[34m88\e[94m||||||||||||"
-echo -e "             \e[34m8888\e[94m||||||||||||"
-echo -e "             \e[34m888888\e[94m||||||||||||"
-echo -e "             \e[34m88888888\e[94m||||||||||||"
-echo -e "             \e[34m8888888888\e[94m||||||||||||"
-echo -e "             \e[34m888888888888\e[94m||||||||||||"
-echo -e "             \e[94m|||||||||||||\e[34m888888888888"
-echo -e "  \e[94m||         \e[34m8\e[94m||||||||||||||\e[34m88888888          \e[34mUser:\e[39m           $(whoami)"
-echo -e "  \e[94m||||       \e[34m888\e[94m||||||||||||||\e[34m8888            \e[34mHostname:\e[39m       $(hostname)"
-echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8              \e[34mDistro:\e[39m         $(get_distribution)"
+echo -e "                   \e[94m||||||||||||"
+echo -e "                   \e[34m88\e[94m||||||||||||"
+echo -e "                   \e[34m8888\e[94m||||||||||||"
+echo -e "                   \e[34m888888\e[94m||||||||||||"
+echo -e "                   \e[34m88888888\e[94m||||||||||||"
+echo -e "                   \e[34m8888888888\e[94m||||||||||||"
+echo -e "                   \e[34m888888888888\e[94m||||||||||||"
+echo -e "                   \e[94m|||||||||||||\e[34m888888888888"
+echo -e "  \e[94m||         \e[34m8\e[94m||||||||||||||\e[34m88888888    \e[34mUser:\e[39m           $(whoami)"
+echo -e "  \e[94m||||       \e[34m888\e[94m||||||||||||||\e[34m8888      \e[34mHostname:\e[39m       $(hostname)"
+echo -e "  \e[94m||||||     \e[34m88888\e[94m|||||||||||||\e[34m8        \e[34mDistro:\e[39m         $(get_distribution)"
 echo -e "  \e[94m||||||||   \e[34m8888888\e[94m|||||||||||||             \e[34mKernel:\e[39m         $(uname -r)"
 echo -e "  \e[94m|||||||||  \e[34m888888888\e[94m||||||||||||||          \e[34mShell:\e[39m          $SHELL"
 echo -e "  \e[94m|||||||||||\e[34m88888888888\e[94m||||||||||||||        \e[34mCPU:\e[39m            $(get_cpuinfo)"
@@ -126,8 +126,10 @@ echo "Executing tasks:"
 
 
 # Submodules
-echo_task "Updating submodules"
-(cd "$REPO" && git submodule update --init --recursive)
+if [ -d "$REPO/.git" ]; then
+    echo_task "Updating submodules"
+    (cd "$REPO" && git submodule update --init --recursive)
+fi
 
 if is_macos -eq 1; then
     if command -v brew > /dev/null; then

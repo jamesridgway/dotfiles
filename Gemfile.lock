@@ -364,12 +364,14 @@ GEM
     jmespath (1.6.0)
     json (2.6.1)
     jwt (2.3.0)
+    kitchen-ec2 (3.12.0)
+      aws-sdk-ec2 (~> 1.0)
+      retryable (>= 2.0, < 4.0)
+      test-kitchen (>= 1.4.1, < 4)
     kitchen-inspec (2.5.2)
       hashie (>= 3.4, <= 5.0)
       inspec (>= 2.2.64, < 6.0)
       test-kitchen (>= 2.7, < 4)
-    kitchen-vagrant (1.11.0)
-      test-kitchen (>= 1.4, < 4)
     license-acceptance (2.1.13)
       pastel (~> 0.7)
       tomlrb (>= 1.2, < 3.0)
@@ -431,6 +433,7 @@ GEM
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
     retriable (3.1.2)
+    retryable (3.0.5)
     rexml (3.2.5)
     rspec (3.10.0)
       rspec-core (~> 3.10.0)
@@ -644,8 +647,8 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  kitchen-ec2
   kitchen-inspec
-  kitchen-vagrant
   test-kitchen
 
 BUNDLED WITH

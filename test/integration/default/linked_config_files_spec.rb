@@ -10,7 +10,7 @@
     'zsh/.zshenv' => '.zshenv',
     'zsh/custom/themes/jagnoster.zsh-theme' => '.oh-my-zsh/custom/themes/jagnoster.zsh-theme',
 }.each do |source, destination|
-  describe file("/home/vagrant/#{destination}") do
-    its('link_path') { should eq "/home/vagrant/dotfiles/#{source}" }
+  describe file("/home/ubuntu/#{destination}") do
+    its('link_path') { should eq "/home/ubuntu/data/#{source}" }
   end
 end
