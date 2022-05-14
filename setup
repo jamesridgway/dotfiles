@@ -254,7 +254,7 @@ cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 # Zellij
 if [ ! -f "${HOME}/bin/zellij" ]; then
     curl -s -L -o "${HOME}/zellij.tar.gz" https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz
-    tar zxvf zellij.tar.gz -C "${HOME}/bin"
+    tar zxvf "${HOME}/zellij.tar.gz" -C "${HOME}/bin"
     rm "${HOME}/zellij.tar.gz"
 fi
 
