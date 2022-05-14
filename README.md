@@ -1,5 +1,5 @@
 # dotfiles
-[![Build Status](https://travis-ci.org/jamesridgway/dotfiles.svg?branch=master)](https://travis-ci.org/jamesridgway/dotfiles)
+[![CI](https://github.com/jamesridgway/dotfiles/actions/workflows/ci.yml/badge.svg)](https://github.com/jamesridgway/dotfiles/actions/workflows/ci.yml)
 
 Your dotfiles are how you personalise your system. These are mine,
 
