@@ -251,24 +251,11 @@ mkdir -p "${HOME}/.config/terminator"
 cp "$REPO/terminator/config" "$HOME/.config/terminator/config"
 
 
-# Powerline
-if command -v dpkg > /dev/null; then
-    echo_sub_task "Installing powerline fonts"
-    apt_install fonts-powerline
-fi
-powerline_path=$(python3 -c 'import pkgutil; print(pkgutil.get_loader("powerline").get_filename())' || true)
-if [[ "$powerline_path" != "" ]]; then
-	echo_task "Powerline already installed"
-else
-	echo_task "Setup powerline"
-	pip install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
-	pip3 install --user git+git://github.com/powerline/powerline | sed 's/^/      /'
-fi
-if is_macos -eq 1; then
-    mkdir -p "$HOME/Library/Python/3.7/lib/python/site-packages/scripts"
-    ln -sf "$REPO/config/powerline" "$HOME/Library/Python/3.7/lib/python/site-packages/scripts/powerline-config"
-else
-    ln -sf "$REPO/config/powerline" "$HOME/.config/powerline"
+# Zellij
+if [ ! -f "${HOME}/bin/zellij" ]; then
+    curl -s -L -o "${HOME}/zellij.tar.gz" https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz
+    tar zxvf zellij.tar.gz -C "${HOME}/bin"
+    rm "${HOME}/zellij.tar.gz"
 fi
 
 # Install AWS CLI
