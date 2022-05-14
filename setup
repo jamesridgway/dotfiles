@@ -135,7 +135,6 @@ if is_macos -eq 1; then
     if command -v brew > /dev/null; then
         echo_task "Installing brew packages"
         brew_install "python3"
-        brew_install "tmux"
     else
         echo -e "\n\n\nPlease install brew - https://brew.sh/"
         exit 0
@@ -154,7 +153,6 @@ if is_sudo -eq 0; then
         apt_install "htop"
         apt_install "python3"
         apt_install "python3-pip"
-        apt_install "tmux"
         apt_install "vim"
         apt_install "zsh"
     else
@@ -175,18 +173,6 @@ chmod +x "$HOME/.gnupg/scd-event"
 # VIM
 echo_task "Setting up VIM config"
 ln -sf "$REPO/vim/.vimrc" "$HOME/.vimrc"
-
-
-# TMUX
-echo_task "Setting up TMUX config"
-ln -sf "$REPO/tmux/.tmux.conf" "$HOME/.tmux.conf"
-if [ -d "$HOME/.tmux/plugins/tpm" ]; then
-    echo_sub_task "TPM already installed"
-else
-    echo_sub_task "TPM"
-	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" &> /dev/null
-    $HOME/.tmux/plugins/tpm/scripts/install_plugins.sh
-fi
 
 
 # Local ~/bin
