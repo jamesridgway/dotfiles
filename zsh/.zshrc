@@ -47,21 +47,6 @@ else
   echo "Unable to source powerline bindings"
 fi
 
-# Tmux
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-  # ssh session
-else
-  if [ "$TMUX" = "" ]; then
-    TMUX_ID="`tmux ls | grep -vm1 attached | cut -d: -f1`"
-    if [[ -z "$TMUX_ID" ]]
-    then
-      tmux -2
-    else
-      tmux -2 attach-session -t "$TMUX_ID"
-    fi
-  fi
-fi
-
 # Terraform caching
 mkdir -p "${HOME}/.terraform.d/plugin-cache"
 export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
@@ -75,3 +60,5 @@ export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
 # tabtab source for slss package
 # uninstall by removing these lines or running `tabtab uninstall slss`
 [[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh
+
+eval "$(zellij setup --generate-auto-start zsh)"
