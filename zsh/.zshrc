@@ -38,14 +38,6 @@ if [ -d "$HOME/Library/Python/3.7/bin" ]; then
     export PATH="$PATH:$HOME/Library/Python/3.7/bin"
 fi
 
-# Powerline
-export POWERLINE_PATH=$(python3 -c 'import os; import pkgutil; print(os.path.dirname(pkgutil.get_loader("powerline").get_filename()))' 2>/dev/null)
-if [[ "$POWERLINE_PATH" != "" ]]; then
-  powerline-daemon -q
-  source ${POWERLINE_PATH}/bindings/zsh/powerline.zsh
-else
-  echo "Unable to source powerline bindings"
-fi
 
 # Terraform caching
 mkdir -p "${HOME}/.terraform.d/plugin-cache"
