@@ -361,7 +361,7 @@ GEM
       train-core (~> 3.0)
       tty-prompt (~> 0.17)
       tty-table (~> 0.10)
-    jmespath (1.6.0)
+    jmespath (1.6.1)
     json (2.6.1)
     jwt (2.3.0)
     kitchen-ec2 (3.12.0)
