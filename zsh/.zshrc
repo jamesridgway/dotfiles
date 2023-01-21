@@ -54,3 +54,7 @@ export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
 [[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/slss.zsh
 
 eval "$(zellij setup --generate-auto-start zsh)"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
