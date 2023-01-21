@@ -6,7 +6,7 @@ driver:
   spot_price: on-demand
 
 platforms:
-  - name: ubuntu-20.04
+  - name: ubuntu-22.04
 
 provisioner:
   name: shell
