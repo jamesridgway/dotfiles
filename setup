@@ -286,6 +286,7 @@ else
    rm -rf "$HOME/.zshrc"
 fi
 ln -sf "$REPO/zsh/.zshrc" "$HOME/.zshrc"
+ln -sf "$REPO/zsh/.zprofile" "$HOME/.zprofile"
 ln -sf "$REPO/zsh/.zshenv" "$HOME/.zshenv"
 
 ln -sf "$REPO/zsh/custom/themes/jagnoster.zsh-theme" "$HOME/.oh-my-zsh/custom/themes/jagnoster.zsh-theme"
