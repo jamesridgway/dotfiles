@@ -43,6 +43,9 @@ fi
 mkdir -p "${HOME}/.terraform.d/plugin-cache"
 export TF_PLUGIN_CACHE_DIR="${HOME}/.terraform.d/plugin-cache"
 
+# 1Password / SSH
+export SSH_AUTH_SOCK=~/.1password/agent.sock
+
 # tabtab source for serverless package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
 [[ -f /home/james/code/useful/phone-api/node_modules/tabtab/.completions/serverless.zsh ]] && . /home/james/code/useful/phone-api/node_modules/tabtab/.completions/serverless.zsh
