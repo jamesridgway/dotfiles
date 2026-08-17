@@ -1,0 +1,48 @@
+#!/bin/bash
+# Stow every package in this repo into $HOME.
+#
+# --no-folding keeps directories real and links only individual files, so
+# Omarchy can keep writing its own files into ~/.config/omarchy/ without them
+# landing in this repo.
+
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+if ! command -v stow >/dev/null; then
+  echo "GNU Stow is not installed. Install it with:" >&2
+  echo "  sudo pacman -S --needed stow" >&2
+  exit 1
+fi
+
+# Every directory that isn't .git is a stow package.
+packages=()
+for dir in */; do
+  packages+=("${dir%/}")
+done
+
+if [[ ${#packages[@]} -eq 0 ]]; then
+  echo "No packages found." >&2
+  exit 1
+fi
+
+echo "Stowing: ${packages[*]}"
+echo
+
+# Show what would happen, so conflicts surface before anything is written.
+if ! stow -n -v --no-folding -t "$HOME" "${packages[@]}"; then
+  echo >&2
+  echo "Dry run reported conflicts. Nothing has been changed." >&2
+  echo "Move or delete the conflicting files, then run this again." >&2
+  exit 1
+fi
+
+echo
+read -rp "Apply the above? [y/N] " reply
+[[ ${reply,,} == y ]] || { echo "Aborted."; exit 0; }
+
+stow -v --no-folding -t "$HOME" "${packages[@]}"
+
+echo
+echo "Done. If Hyprland config changed, validate it with:"
+echo "  hyprctl reload && hyprctl configerrors"

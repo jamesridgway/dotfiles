@@ -1,0 +1,13 @@
+# Omarchy writes timestamped backups next to configs it replaces during
+# updates and migrations. Never track those.
+*.bak
+*.bak.*
+*.omarchy-upgrade-to-*.bak
+*.sample
+
+# Omarchy-managed symlinks, regenerated on `omarchy theme set`.
+omarchy/.config/omarchy/current/
+
+# Editor and OS noise
+*.swp
+.DS_Store
