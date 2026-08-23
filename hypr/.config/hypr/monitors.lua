@@ -24,7 +24,24 @@
 hl.monitor({ output = "desc:BOE 0x0AE0", mode = "preferred", position = "auto", scale = 1.6 })
 
 -- Fallback for any panel without a rule above.
-hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" })
+--
+-- Deliberately written as a table rather than a single hl.monitor({ ... }) call.
+-- omarchy-hyprland-monitor-scaling persists scale changes by running `sed -i`
+-- against this exact one-line form, and `sed -i` writes a temp file and renames
+-- it over the target -- which replaces the stow symlink with a regular file and
+-- silently detaches this config from the dotfiles repo. Splitting the table
+-- makes its regex miss, so the file is left alone.
+--
+-- Nothing is lost by opting out: that sed only ever rewrites this catch-all,
+-- never the `desc:` rules above, and per note 1 a `desc:` rule wins regardless.
+-- The scale it wrote here was already being overridden on every reload.
+local fallback = {
+  output = "",
+  mode = "preferred",
+  position = "auto",
+  scale = "auto",
+}
+hl.monitor(fallback)
 
 -- GDK_SCALE is a single global env var, so it can't be expressed per-monitor
 -- like the rules above. Anything in that category belongs in a per-host file:
