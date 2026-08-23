@@ -48,15 +48,34 @@ The `bootstrap` script does these steps:
 3. Do a test run, and show the plan.
 4. Ask you for approval.
 5. Make the symbolic links.
-6. Install the third-party plugins in `plugins.txt`.
+6. Install the packages that the configuration assumes.
+7. Install the third-party plugins in `plugins.txt`.
 
 The test run looks for a file that is already at a target path. If it finds
 such a file, the script stops and changes nothing. If all the symbolic
 links are already correct, the script tells you that there is no work to do.
 
 The script exits with status 0 when it finds no problem. It exits with status 1
-when it finds a conflict, or when a plugin does not install. A plugin that does
-not install stops neither the other plugins nor the rest of the run.
+when it finds a conflict, or when a package or a plugin does not install. A
+package or a plugin that does not install stops neither the other packages and
+plugins nor the rest of the run.
+
+## Packages
+
+Step 6 installs the tools that the configuration in this repo assumes, but that
+no package depends on. At present there is one: `hyprmon-bin`, which supplies
+the `hyprmon` command.
+
+The step tests for the command, not for the package. It installs a missing one
+with `yay`, or with `paru` if there is no `yay`. It does not pass
+`--noconfirm`, because an AUR build asks you to read a `PKGBUILD` and `sudo`
+asks for a password.
+
+Note that HyprMon writes monitor rules to `~/.config/hypr/hyprmon.lua` and adds
+`require("hyprmon")` to the end of `hyprland.lua`. Hyprland gives the last rule
+that matches a monitor, so those rules beat the rules in `hypr/monitors.lua`,
+and this repo does not track them. Use HyprMon to work out an arrangement. Then
+copy the result into `hypr/monitors.lua` and delete the `require` line.
 
 The script writes colour when the output goes to a terminal. It writes plain
 text to a file or to a pipe, and it obeys the `NO_COLOR` variable.
@@ -122,16 +141,25 @@ scale of the panel of the machine that you are on. Leave that panel to this
 rule, because Omarchy writes the scale of the current panel to it.
 
 Give the panel of a different machine its own rule. Such a rule uses `desc:` to
-select a monitor. `desc:` is the make and the model of the panel. Therefore a
-rule for a panel that you did not connect has no effect. The rules for all
-machines stay in one file. This also gives correct results when you connect a
-laptop to a dock.
+select a monitor. Therefore a rule for a panel that you did not connect has no
+effect. The rules for all machines stay in one file. This also gives correct
+results when you connect a laptop to a dock.
+
+`desc:` makes a match on the start of the text `<make> <model> <serial>`. Use
+the make and the model to select every panel of one type. Add the serial to
+select one panel. The serial is the only way to tell two identical panels
+apart.
 
 To find the string for a rule:
 
 ```bash
 hyprctl -j monitors all | jq -r '.[].description'
 ```
+
+`jamesdesktop` has three identical DELL U2715H panels. Each one therefore has a
+rule with a serial. Each rule also gives a position, in place of `auto`,
+because `auto` puts the panels in the sequence that Hyprland finds them, and
+that sequence is not the sequence on the desk.
 
 `GDK_SCALE` is not in a per-host file. It is `omarchy_gdk_scale` in
 `monitors.lua`, because `omarchy-hyprland-monitor-scaling` writes it together
@@ -141,10 +169,20 @@ Put other global settings in `hypr/hosts/<hostname>.lua`. Hyprland loads this
 file if the file exists. If the file does not exist, Hyprland continues and
 gives no error message.
 
-These are three results of tests with Hyprland 0.56.2:
+These are four results from Hyprland 0.56.2. The first two come from
+`CMonitorRuleManager::get()` and `CMonitor::matchesStaticSelector()` in the
+source code:
 
-- **A `desc:` rule has priority over the `output = ""` fallback rule.** The
-  sequence of the rules has no effect. Do not sort the rules.
+- **A specific rule has priority over the `output = ""` fallback rule.** The
+  sequence of the rules has no effect. Do not sort the rules. Hyprland compares
+  an empty selector with the NAME of the output, and a name is never empty.
+  Therefore the fallback rule matches nothing in the main loop. Hyprland uses
+  it only in a second loop, after no specific rule made a match.
+- **Between two specific rules, the last rule wins.** Hyprland reads the rules
+  in reverse sequence and uses the first match. A `desc:` rule has no priority
+  over a rule that gives the name of an output. Therefore a file that Hyprland
+  loads after `monitors.lua` replaces these rules, and gives no message. This
+  is what `hyprmon.lua` does. Read the note in the **Packages** section.
 - **Hyprland changes an incorrect scale to the nearest correct scale, and gives
   no message.** A scale is correct only if it divides the pixel dimensions of
   the panel into whole numbers. On a 2560x1600 panel, a scale of 1.5 gives

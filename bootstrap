@@ -126,6 +126,70 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Packages
+#
+# Tools that the configuration in this repo assumes, but that no package
+# depends on. A missing one is reported and does not stop the run, because
+# every symlink is already in place by this point and the desktop works
+# without any of them.
+#
+# hyprmon arranges monitors in a TUI. The arrangement itself lives in
+# hypr/monitors.lua and applies with or without it -- read the note at the foot
+# of that file before you use it, because HyprMon writes rules that override
+# the ones this repo tracks.
+# ---------------------------------------------------------------------------
+
+heading "Packages"
+
+# pacman cannot build from the AUR. Find a helper that can. yay ships with
+# Omarchy; paru is here for a machine set up by hand.
+aur_helper() {
+  local candidate
+  for candidate in yay paru; do
+    if command -v "$candidate" >/dev/null; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ensure_package <pacman-name> <command-it-provides>
+#
+# Test for the command rather than for the package, because the command is what
+# the configuration actually needs, and because `pacman -Q` is slower.
+#
+# The install is NOT run with --noconfirm. An AUR build asks you to read a
+# PKGBUILD, and sudo asks for a password; both need the terminal, so the output
+# is left alone rather than captured the way the plugin output is.
+ensure_package() {
+  local pkg="$1" bin="$2" helper
+
+  if command -v "$bin" >/dev/null; then
+    ok "$pkg ${DIM}already installed${RESET}"
+    return 0
+  fi
+
+  if ! helper=$(aur_helper); then
+    bad "$pkg ${DIM}is missing, and neither yay nor paru is installed${RESET}"
+    info "install an AUR helper, or install $pkg yourself, then run this again"
+    return 0
+  fi
+
+  work "$pkg ${DIM}installing with $helper${RESET}"
+  printf '\n'
+  if "$helper" -S --needed "$pkg"; then
+    printf '\n'
+    ok "$pkg ${DIM}installed${RESET}"
+  else
+    printf '\n'
+    bad "$pkg ${DIM}could not be installed with $helper${RESET}"
+  fi
+}
+
+ensure_package hyprmon-bin hyprmon
+
+# ---------------------------------------------------------------------------
 # Plugins
 #
 # shell.json decides which plugins are on, and this repo tracks it -- so the

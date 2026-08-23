@@ -23,12 +23,24 @@
 --
 --   stow --adopt --no-folding -t "$HOME" hypr && git diff
 --
--- Two Hyprland behaviours worth knowing, both verified on Hyprland 0.56.2:
+-- Three Hyprland behaviours worth knowing. Numbers 1 and 2 are what
+-- CMonitorRuleManager::get() and CMonitor::matchesStaticSelector() do in the
+-- v0.56.2 source; number 3 is observed:
 --
---   1. A specific `desc:` rule beats the `output = ""` catch-all regardless of
---      the order they appear in. You do not need to sort these by specificity.
+--   1. A specific rule always beats the `output = ""` catch-all, whatever the
+--      order. The catch-all matches nothing in the main loop -- an empty
+--      selector is compared against the output NAME, which is never empty --
+--      so it is reached only by a second pass that runs after no specific rule
+--      has matched. You do not need to sort these by specificity.
 --
---   2. Hyprland silently snaps an invalid scale to the nearest valid one. A
+--   2. Between two SPECIFIC rules, the last one defined wins. The main loop
+--      walks the rules in reverse and returns the first match, and a `desc:`
+--      rule has no priority over a rule that names an output. This matters
+--      because hyprland.lua loads this file BEFORE any other monitor config,
+--      so a later file silently overrides everything below. See the note on
+--      HyprMon further down.
+--
+--   3. Hyprland silently snaps an invalid scale to the nearest valid one. A
 --      scale is valid only if it divides the panel's pixel dimensions into
 --      whole numbers -- on 2560x1600, scale 1.5 gives 1706.67px and is
 --      rejected in favour of 1.6. If a scale here seems to be ignored, check
@@ -44,17 +56,40 @@ local omarchy_monitor_scale = 1.6
 hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
 
--- Panels on OTHER machines get an explicit rule here, matched on `desc:` (the
--- panel's make + model) so it follows the panel rather than the machine. A rule
--- for a panel that isn't connected is inert, so every machine's rules can live
--- in this one file. Leave the panel of the machine you are on to the catch-all
--- above, so Omarchy can keep managing its scale.
+-- Panels on OTHER machines get an explicit rule here, matched on `desc:` so the
+-- rule follows the panel rather than the machine. A rule for a panel that isn't
+-- connected is inert, so every machine's rules can live in this one file. Leave
+-- the panel of the machine you are on to the catch-all above, so Omarchy can
+-- keep managing its scale.
 --
--- Find the string to match with:
+-- `desc:` is a PREFIX match against "<make> <model> <serial>". Match on make
+-- and model to catch every panel of one type. Include the serial to single out
+-- one panel, which is the only way to tell identical panels apart.
+--
+-- Find the strings to match with:
 --   hyprctl -j monitors all | jq -r '.[].description'
 --
 -- jamesp1's internal panel is BOE 0x0AE0, 2560x1600@165. It uses the catch-all.
--- hl.monitor({ output = "desc:...", mode = "preferred", position = "auto", scale = 1 })
+
+-- jamesdesktop: three DELL U2715H at 2560x1440, side by side, left to right.
+-- The serial is what identifies each one, because all three are the same model
+-- and because a connector name (DP-2, HDMI-A-1) moves when a cable changes
+-- port. Position is pinned rather than "auto", so the arrangement survives a
+-- reboot, a replug and a machine rebuild.
+--
+-- The row starts at x=2560, not at 0. That is deliberate only in the sense that
+-- it is what the arrangement already was. Hyprland does not need the origin to
+-- be occupied.
+hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D63P0JNS", mode = "preferred", position = "2560x0", scale = 1 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D63P0ACS", mode = "preferred", position = "5120x0", scale = 1 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D7B70X9S", mode = "preferred", position = "7680x0", scale = 1 })
+
+-- HyprMon (the `hyprmon` TUI, installed by ./bootstrap) writes its own rules to
+-- ~/.config/hypr/hyprmon.lua and appends `require("hyprmon")` to the END of
+-- hyprland.lua. By behaviour 2 above, those rules therefore beat the three
+-- rules here, and hyprmon.lua is not tracked in this repo -- so the arrangement
+-- that actually applies would live nowhere. Use HyprMon to work out a layout,
+-- then copy the result into this file and remove the require line.
 
 -- Settings that are global and cannot be expressed per-monitor belong in a
 -- per-host file: hypr/hosts/<hostname>.lua, loaded below if it exists and
