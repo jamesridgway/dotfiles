@@ -11,3 +11,9 @@ omarchy/.config/omarchy/current/
 # Editor and OS noise
 *.swp
 .DS_Store
+.lazy.lua
+
+# ~/.ssh holds private keys and known_hosts. Track the config file and nothing
+# else, so a stray key can never be committed by accident.
+ssh/.ssh/*
+!ssh/.ssh/config

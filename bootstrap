@@ -26,17 +26,39 @@ if [[ ${#packages[@]} -eq 0 ]]; then
   exit 1
 fi
 
-echo "Stowing: ${packages[*]}"
+echo "Packages: ${packages[*]}"
 echo
 
+# ssh refuses to use a config file that is group- or world-writable, and git
+# records only the executable bit -- a fresh clone lands at 644. Fix the mode on
+# the file in this repo, since the symlink resolves through to it.
+if [[ -f ssh/.ssh/config ]]; then
+  chmod 600 ssh/.ssh/config
+fi
+
 # Show what would happen, so conflicts surface before anything is written.
-if ! stow -n -v --no-folding -t "$HOME" "${packages[@]}"; then
+# stow sends its plan, its conflict report and its simulation banner all to
+# stderr, so capture that rather than letting it leak straight to the terminal.
+# A conflict exits non-zero; a clean run exits 0.
+if ! plan=$(stow -n -v --no-folding -t "$HOME" "${packages[@]}" 2>&1); then
+  echo "$plan" >&2
   echo >&2
   echo "Dry run reported conflicts. Nothing has been changed." >&2
   echo "Move or delete the conflicting files, then run this again." >&2
   exit 1
 fi
 
+# Drop stow's "in simulation mode" banner. It describes the dry run rather than
+# this repo, and when everything is already linked it is the *only* output --
+# which would otherwise leave us prompting to apply a plan that is empty.
+plan=$(printf '%s\n' "$plan" | grep -v '^WARNING: in simulation mode' || true)
+
+if [[ -z ${plan//[[:space:]]/} ]]; then
+  echo "Everything is already stowed. Nothing to do."
+  exit 0
+fi
+
+echo "$plan"
 echo
 read -rp "Apply the above? [y/N] " reply
 [[ ${reply,,} == y ]] || { echo "Aborted."; exit 0; }
