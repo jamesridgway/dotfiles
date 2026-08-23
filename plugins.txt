@@ -1,0 +1,14 @@
+# Third-party Omarchy shell plugins, installed by ./bootstrap.
+#
+# Format: <plugin-id> <git-url>
+#
+# The id must match the "id" field in the plugin's manifest.json, because
+# bootstrap uses it to test whether the plugin is already installed. Find it
+# with: jq -r .id ~/.config/omarchy/plugins/<dir>/manifest.json
+#
+# First-party plugins are NOT listed here. They ship inside the Omarchy package
+# and need no installation. Whether a plugin is on or off is decided by
+# shell.json, which this repo already tracks, so only the code of a third-party
+# plugin is missing on a new machine.
+
+jkoestinger.vpn https://github.com/jkoestinger/omarchy-vpn.git

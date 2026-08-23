@@ -48,6 +48,7 @@ The `bootstrap` script does these steps:
 3. Do a test run, and show the plan.
 4. Ask you for approval.
 5. Make the symbolic links.
+6. Install the third-party plugins in `plugins.txt`.
 
 The test run looks for a file that is already at a target path. If it finds
 such a file, the script stops and changes nothing. If all the symbolic
@@ -171,6 +172,38 @@ can write to. Git records only the executable bit. Therefore a new clone gives
 mode 644. The `bootstrap` script sets mode 600. If you use `stow` directly, set
 the mode yourself.
 
+## Plugins
+
+Omarchy has two kinds of shell plugin, and this repo treats them differently.
+
+**First-party plugins** are part of the Omarchy package. You do not install
+them. There are 37 of them on this system.
+
+**Third-party plugins** are git clones in `~/.config/omarchy/plugins/`. This
+repo does not track that directory, because each plugin is its own git repo.
+`plugins.txt` records the id and the git URL of each one instead. `bootstrap`
+reads that file and installs the plugins that are absent.
+
+`shell.json` decides which plugins are on. A plugin is on when `shell.json`
+refers to its id, either in `bar.layout` or in the `plugins` array. First-party
+plugins that are not bar widgets are always on. This repo tracks `shell.json`,
+so the on/off state of every plugin arrives with the other files. Only the code
+of a third-party plugin is missing on a new machine, and `plugins.txt` supplies
+that.
+
+To add a plugin to this repo:
+
+```bash
+omarchy plugin add <git-url> --enable       # install it and switch it on
+jq -r .id ~/.config/omarchy/plugins/<dir>/manifest.json
+```
+
+Put the id and the URL in `plugins.txt`. Then commit `plugins.txt` and the
+`shell.json` change together.
+
+Note: `omarchy-plugin-add` stops with an error when the plugin is already
+installed. Therefore `bootstrap` tests for the directory of each plugin first.
+
 ## What this repo does not contain
 
 - **Secrets and application data** — browser profiles, `1Password/`, `gh/`,
@@ -179,6 +212,9 @@ the mode yourself.
   commit a private key by accident.
 - **`~/.config/omarchy/current/`** — Omarchy makes these symbolic links again
   each time that you run `omarchy theme set`.
+- **`~/.config/omarchy/plugins/`** — each third-party plugin is its own git
+  repo. `plugins.txt` records the git URL of each one, and `bootstrap` installs
+  them.
 - **`*.bak` and `*.omarchy-upgrade-to-*.bak`** — backup files from Omarchy.
   Their names contain a date and a time. See `.gitignore`.
 - **`~/.config/hypr/hyprlock.conf` and `hypridle.conf`** — Omarchy 4 does not

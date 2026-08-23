@@ -17,3 +17,6 @@ omarchy/.config/omarchy/current/
 # else, so a stray key can never be committed by accident.
 ssh/.ssh/*
 !ssh/.ssh/config
+
+# Third-party plugins are git clones. plugins.txt records their URLs instead.
+omarchy/.config/omarchy/plugins/

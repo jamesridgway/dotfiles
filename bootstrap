@@ -15,7 +15,8 @@ if ! command -v stow >/dev/null; then
   exit 1
 fi
 
-# Every directory that isn't .git is a stow package.
+# Every directory that isn't .git is a stow package. Files at the top level
+# (plugins.txt, README.md) are not packages and are skipped by the glob.
 packages=()
 for dir in */; do
   packages+=("${dir%/}")
@@ -54,16 +55,53 @@ fi
 plan=$(printf '%s\n' "$plan" | grep -v '^WARNING: in simulation mode' || true)
 
 if [[ -z ${plan//[[:space:]]/} ]]; then
-  echo "Everything is already stowed. Nothing to do."
-  exit 0
+  echo "Everything is already stowed."
+else
+  echo "$plan"
+  echo
+  read -rp "Apply the above? [y/N] " reply
+  [[ ${reply,,} == y ]] || { echo "Aborted."; exit 0; }
+
+  stow -v --no-folding -t "$HOME" "${packages[@]}"
 fi
 
-echo "$plan"
-echo
-read -rp "Apply the above? [y/N] " reply
-[[ ${reply,,} == y ]] || { echo "Aborted."; exit 0; }
+# Third-party Omarchy shell plugins.
+#
+# shell.json decides which plugins are on, and this repo tracks it -- so the
+# configuration always arrives. What does not arrive is the code of a
+# third-party plugin, which lives in a git clone under ~/.config/omarchy/
+# plugins/ and is not tracked here. Without this step a new machine gets a
+# shell.json that references a plugin it does not have.
+#
+# omarchy-plugin-add fails when the plugin is already present, and this script
+# runs under `set -e`, so test for the directory first rather than letting a
+# second run abort the script.
+install_plugins() {
+  local manifest="plugins.txt" dir="$HOME/.config/omarchy/plugins"
+  local id url
 
-stow -v --no-folding -t "$HOME" "${packages[@]}"
+  [[ -f $manifest ]] || return 0
+
+  if ! command -v omarchy-plugin-add >/dev/null; then
+    echo "omarchy-plugin-add not found; skipping plugins." >&2
+    return 0
+  fi
+
+  while read -r id url _; do
+    [[ -z $id || $id == \#* ]] && continue
+
+    if [[ -e "$dir/$id" ]]; then
+      echo "  $id is already installed"
+    else
+      echo "  installing $id from $url"
+      omarchy-plugin-add "$url" --yes || echo "  FAILED to install $id" >&2
+    fi
+  done <"$manifest"
+}
+
+echo
+echo "Plugins:"
+install_plugins
 
 echo
 echo "Done. If Hyprland config changed, validate it with:"
