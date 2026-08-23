@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stow every package in this repo into $HOME.
+# Stow every package in this repo into $HOME, then install third-party plugins.
 #
 # --no-folding keeps directories real and links only individual files, so
 # Omarchy can keep writing its own files into ~/.config/omarchy/ without them
@@ -9,11 +9,53 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-if ! command -v stow >/dev/null; then
-  echo "GNU Stow is not installed. Install it with:" >&2
-  echo "  sudo pacman -S --needed stow" >&2
-  exit 1
+# ---------------------------------------------------------------------------
+# Output helpers
+#
+# Colour only when stdout is a terminal. A redirect, a pipe or a CI job gets
+# clean text with no escape codes. NO_COLOR is honoured -- see no-color.org.
+# ---------------------------------------------------------------------------
+
+if [[ -t 1 && -z ${NO_COLOR:-} ]]; then
+  BOLD=$'\e[1m'; DIM=$'\e[2m'; RESET=$'\e[0m'
+  RED=$'\e[31m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; BLUE=$'\e[34m'
+else
+  BOLD=''; DIM=''; RESET=''
+  RED=''; GREEN=''; YELLOW=''; BLUE=''
 fi
+
+problems=0
+
+rule()    { printf '%s\n' "${DIM}────────────────────────────────────────────────────${RESET}"; }
+heading() { printf '\n%s\n' "${BOLD}${BLUE}▸ $*${RESET}"; }
+ok()      { printf '  %s\n' "${GREEN}✓${RESET} $*"; }
+work()    { printf '  %s\n' "${YELLOW}→${RESET} $*"; }
+info()    { printf '  %s\n' "${DIM}$*${RESET}"; }
+warn()    { printf '  %s\n' "${YELLOW}!${RESET} $*" >&2; }
+bad()     { printf '  %s\n' "${RED}✗${RESET} $*" >&2; problems=$((problems + 1)); }
+
+# A hard stop: report, then leave without touching anything.
+die() {
+  printf '\n  %s %s\n\n' "${RED}✗${RESET}" "${BOLD}$1${RESET}" >&2
+  shift
+  for line in "$@"; do printf '    %s\n' "${DIM}$line${RESET}" >&2; done
+  if [[ $# -gt 0 ]]; then printf '\n' >&2; fi
+  exit 1
+}
+
+printf '\n%s\n' "${BOLD}  dotfiles${RESET}${DIM} · GNU Stow · Omarchy 4${RESET}"
+rule
+
+# ---------------------------------------------------------------------------
+# Preflight
+# ---------------------------------------------------------------------------
+
+heading "Preflight"
+
+if ! command -v stow >/dev/null; then
+  die "GNU Stow is not installed." "Install it with:" "sudo pacman -S --needed stow"
+fi
+ok "stow $(stow --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
 
 # Every directory that isn't .git is a stow package. Files at the top level
 # (plugins.txt, README.md) are not packages and are skipped by the glob.
@@ -23,30 +65,36 @@ for dir in */; do
 done
 
 if [[ ${#packages[@]} -eq 0 ]]; then
-  echo "No packages found." >&2
-  exit 1
+  die "No packages found." "Run this from the root of the dotfiles repo."
 fi
-
-echo "Packages: ${packages[*]}"
-echo
+ok "${#packages[@]} packages: ${DIM}${packages[*]}${RESET}"
 
 # ssh refuses to use a config file that is group- or world-writable, and git
 # records only the executable bit -- a fresh clone lands at 644. Fix the mode on
 # the file in this repo, since the symlink resolves through to it.
 if [[ -f ssh/.ssh/config ]]; then
   chmod 600 ssh/.ssh/config
+  ok "ssh/.ssh/config mode 600"
 fi
+
+# ---------------------------------------------------------------------------
+# Symlinks
+# ---------------------------------------------------------------------------
+
+heading "Symlinks"
 
 # Show what would happen, so conflicts surface before anything is written.
 # stow sends its plan, its conflict report and its simulation banner all to
 # stderr, so capture that rather than letting it leak straight to the terminal.
 # A conflict exits non-zero; a clean run exits 0.
 if ! plan=$(stow -n -v --no-folding -t "$HOME" "${packages[@]}" 2>&1); then
-  echo "$plan" >&2
-  echo >&2
-  echo "Dry run reported conflicts. Nothing has been changed." >&2
-  echo "Move or delete the conflicting files, then run this again." >&2
-  exit 1
+  printf '\n'
+  printf '%s\n' "$plan" | sed 's/^/    /' >&2
+  die "Conflicts found. Nothing has been changed." \
+    "A real file is sitting where a symlink should go." \
+    "Move or delete it, then run this again." \
+    "To keep the file's contents instead, adopt it into this repo:" \
+    "stow --adopt --no-folding -t \"\$HOME\" <package> && git diff"
 fi
 
 # Drop stow's "in simulation mode" banner. It describes the dry run rather than
@@ -55,17 +103,30 @@ fi
 plan=$(printf '%s\n' "$plan" | grep -v '^WARNING: in simulation mode' || true)
 
 if [[ -z ${plan//[[:space:]]/} ]]; then
-  echo "Everything is already stowed."
+  ok "already stowed, nothing to do"
 else
-  echo "$plan"
-  echo
-  read -rp "Apply the above? [y/N] " reply
-  [[ ${reply,,} == y ]] || { echo "Aborted."; exit 0; }
-
-  stow -v --no-folding -t "$HOME" "${packages[@]}"
+  links=$(printf '%s\n' "$plan" | grep -c '^LINK:' || true)
+  dirs=$(printf '%s\n' "$plan" | grep -c '^MKDIR:' || true)
+  info "$links links and $dirs directories to create:"
+  printf '\n'
+  printf '%s\n' "$plan" | sed "s/^/    ${DIM}/;s/\$/${RESET}/"
+  printf '\n'
+  read -rp "  ${BOLD}Apply?${RESET} [y/N] " reply
+  if [[ ${reply,,} != y ]]; then
+    printf '\n  %s\n\n' "${YELLOW}!${RESET} Aborted, nothing changed."
+    exit 0
+  fi
+  printf '\n'
+  if ! output=$(stow -v --no-folding -t "$HOME" "${packages[@]}" 2>&1); then
+    printf '%s\n' "$output" | sed 's/^/    /' >&2
+    die "stow failed. Some links may not have been made."
+  fi
+  printf '%s\n' "$output" | sed "s/^/    ${DIM}/;s/\$/${RESET}/"
+  ok "stowed $links files"
 fi
 
-# Third-party Omarchy shell plugins.
+# ---------------------------------------------------------------------------
+# Plugins
 #
 # shell.json decides which plugins are on, and this repo tracks it -- so the
 # configuration always arrives. What does not arrive is the code of a
@@ -76,14 +137,21 @@ fi
 # omarchy-plugin-add fails when the plugin is already present, and this script
 # runs under `set -e`, so test for the directory first rather than letting a
 # second run abort the script.
+# ---------------------------------------------------------------------------
+
+heading "Plugins"
+
 install_plugins() {
   local manifest="plugins.txt" dir="$HOME/.config/omarchy/plugins"
-  local id url
+  local id url output
 
-  [[ -f $manifest ]] || return 0
+  if [[ ! -f $manifest ]]; then
+    info "no plugins.txt, nothing to install"
+    return 0
+  fi
 
   if ! command -v omarchy-plugin-add >/dev/null; then
-    echo "omarchy-plugin-add not found; skipping plugins." >&2
+    warn "omarchy-plugin-add not found, skipping plugins"
     return 0
   fi
 
@@ -91,18 +159,33 @@ install_plugins() {
     [[ -z $id || $id == \#* ]] && continue
 
     if [[ -e "$dir/$id" ]]; then
-      echo "  $id is already installed"
+      ok "$id ${DIM}already installed${RESET}"
     else
-      echo "  installing $id from $url"
-      omarchy-plugin-add "$url" --yes || echo "  FAILED to install $id" >&2
+      work "$id ${DIM}installing from $url${RESET}"
+      if output=$(omarchy-plugin-add "$url" --yes 2>&1); then
+        ok "$id ${DIM}installed${RESET}"
+      else
+        bad "$id ${DIM}could not be installed from $url${RESET}"
+        printf '%s\n' "$output" | sed "s/^/      ${DIM}/;s/\$/${RESET}/" >&2
+      fi
     fi
   done <"$manifest"
 }
 
-echo
-echo "Plugins:"
 install_plugins
 
-echo
-echo "Done. If Hyprland config changed, validate it with:"
-echo "  hyprctl reload && hyprctl configerrors"
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
+printf '\n'
+rule
+if [[ $problems -eq 0 ]]; then
+  printf '  %s %s\n\n' "${GREEN}✓${RESET}" "${BOLD}${GREEN}All done, no issues.${RESET}"
+  printf '  %s\n\n' "${DIM}If Hyprland config changed: hyprctl reload && hyprctl configerrors${RESET}"
+  exit 0
+else
+  printf '  %s %s\n\n' "${RED}✗${RESET}" "${BOLD}${RED}Finished with $problems problem(s).${RESET}"
+  printf '  %s\n\n' "${DIM}Everything else was applied. See the messages above.${RESET}"
+  exit 1
+fi
