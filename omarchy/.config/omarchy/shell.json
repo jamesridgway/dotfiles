@@ -35,6 +35,10 @@
           "id": "omarchy.tray"
         },
         {
+          "id": "jkoestinger.vpn",
+          "hiddenBackends": ""
+        },
+        {
           "id": "omarchy.tailscale"
         },
         {
