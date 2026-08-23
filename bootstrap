@@ -9,6 +9,24 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+force_setup=0
+for arg in "$@"; do
+  case "$arg" in
+    --force-setup) force_setup=1 ;;
+    -h | --help)
+      echo "Usage: ./bootstrap [--force-setup]"
+      echo
+      echo "  --force-setup  Run the scripts in setup/ even if nothing changed."
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $arg" >&2
+      echo "Usage: ./bootstrap [--force-setup]" >&2
+      exit 1
+      ;;
+  esac
+done
+
 # ---------------------------------------------------------------------------
 # Output helpers
 #
@@ -57,11 +75,21 @@ if ! command -v stow >/dev/null; then
 fi
 ok "stow $(stow --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
 
-# Every directory that isn't .git is a stow package. Files at the top level
-# (plugins.txt, README.md) are not packages and are skipped by the glob.
+# Every top-level directory is a stow package, except the ones named here.
+# Files at the top level (plugins.txt, README.md) are skipped by the glob.
+#
+# setup/ holds scripts that change the system rather than $HOME, so it must
+# never be stowed. Adding it to a machine's ~ would be meaningless at best.
+not_packages=(setup)
+
 packages=()
 for dir in */; do
-  packages+=("${dir%/}")
+  dir="${dir%/}"
+  skip=0
+  for excluded in "${not_packages[@]}"; do
+    [[ $dir == "$excluded" ]] && skip=1
+  done
+  (( skip )) || packages+=("$dir")
 done
 
 if [[ ${#packages[@]} -eq 0 ]]; then
@@ -237,6 +265,89 @@ install_plugins() {
 }
 
 install_plugins
+
+# ---------------------------------------------------------------------------
+# Setup scripts
+#
+# setup/ holds scripts that change the system rather than $HOME: the Plymouth
+# boot screen, for example, which lives in /usr/share and is baked into the
+# initramfs. They need sudo and they are slow, so they must not run on every
+# bootstrap.
+#
+# Each script is therefore fingerprinted. The hash covers the script and every
+# sibling file whose name starts with the script's name -- so setup/plymouth is
+# hashed together with setup/plymouth-logo.png, and changing either one causes
+# a re-run. The hash of the last successful run is kept in .state/, which is
+# gitignored: it describes this machine, not the repo. A fresh clone has no
+# .state/, so every script runs once on a new machine.
+#
+# Pass --force-setup to run them whatever the hashes say.
+# ---------------------------------------------------------------------------
+
+run_setup_scripts() {
+  local state_dir=".state" script name hash stored
+
+  if [[ ! -d setup ]]; then
+    info "no setup/ directory"
+    return 0
+  fi
+
+  # These scripts need root, and they call sudo several times. Claim the
+  # timestamp once, up front, for two reasons. It keeps the password prompt at
+  # the start rather than somewhere in the middle of a slow run. More
+  # importantly, a run with no terminal to ask on -- a pipe, a cron job -- would
+  # otherwise leave sudo waiting for a password that can never arrive, and the
+  # whole bootstrap would hang instead of failing.
+  if ! sudo -n true 2>/dev/null; then
+    if [[ ! -t 0 ]]; then
+      warn "setup/ needs sudo, and there is no terminal to ask for a password on"
+      info "run ./bootstrap from a terminal to apply them"
+      return 0
+    fi
+    info "the scripts below need root"
+    if ! sudo -v; then
+      bad "could not get sudo; skipping setup scripts"
+      return 0
+    fi
+  fi
+
+  shopt -s nullglob
+  local scripts=(setup/*)
+  shopt -u nullglob
+
+  for script in "${scripts[@]}"; do
+    [[ -f $script && -x $script ]] || continue
+    name=$(basename "$script")
+
+    # The script plus its assets. Glob order is sorted, so this is stable.
+    hash=$(cat "setup/$name"* | sha256sum | cut -d' ' -f1)
+    stored=$(cat "$state_dir/$name.sha256" 2>/dev/null || true)
+
+    if [[ $force_setup -eq 0 && $hash == "$stored" ]]; then
+      ok "$name ${DIM}unchanged since last run${RESET}"
+      continue
+    fi
+
+    if [[ $hash == "$stored" ]]; then
+      work "$name ${DIM}forced${RESET}"
+    elif [[ -n $stored ]]; then
+      work "$name ${DIM}changed, re-running${RESET}"
+    else
+      work "$name ${DIM}has not run on this machine yet${RESET}"
+    fi
+
+    if "./$script"; then
+      mkdir -p "$state_dir"
+      printf '%s\n' "$hash" >"$state_dir/$name.sha256"
+      ok "$name ${DIM}applied${RESET}"
+    else
+      bad "$name ${DIM}failed; it will run again next time${RESET}"
+    fi
+  done
+}
+
+heading "Setup"
+run_setup_scripts
 
 # ---------------------------------------------------------------------------
 # Summary

@@ -1,0 +1,50 @@
+#!/bin/bash
+# Apply the Plymouth boot splash branding.
+#
+# Plymouth draws the screen shown while the machine boots, including the prompt
+# for the disk encryption passphrase. omarchy-plymouth-set also syncs the SDDM
+# login screen with the same colours and logo, so boot and login match.
+#
+# This needs sudo: it writes into /usr/share/plymouth/themes/omarchy and
+# /usr/share/sddm/themes/omarchy, and then rebuilds the initramfs, because the
+# theme is baked into it. The rebuild takes a while. bootstrap therefore runs
+# this script only when it or its logo has changed -- see .state/ and the
+# "Setup scripts" section of bootstrap.
+#
+# Recorded from:
+#   omarchy plymouth set '#14244B' '#FFFFFF' ~/tccs/the-curve-branding/favicon200.png
+#
+# Preview a change before committing it, which writes a PNG and touches nothing:
+#   omarchy plymouth preview '#14244B' '#FFFFFF' setup/plymouth-logo.png /tmp/preview.png
+#
+# Undo with: omarchy plymouth reset
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# omarchy-plymouth-set reads $OMARCHY_PATH for its default assets. Interactive
+# shells get it from ~/.bashrc, but do not rely on that here.
+: "${OMARCHY_PATH:=/usr/share/omarchy}"
+export OMARCHY_PATH
+
+background="#14244B"
+foreground="#FFFFFF"
+logo="setup/plymouth-logo.png"
+
+if [[ ! -f $logo ]]; then
+  echo "plymouth: logo not found: $logo" >&2
+  exit 1
+fi
+
+for cmd in omarchy-plymouth-set magick; do
+  if ! command -v "$cmd" >/dev/null; then
+    echo "plymouth: $cmd is not installed" >&2
+    exit 1
+  fi
+done
+
+echo "plymouth: setting $background / $foreground with $logo"
+echo "plymouth: this rebuilds the initramfs and will ask for your password"
+
+omarchy-plymouth-set "$background" "$foreground" "$logo"

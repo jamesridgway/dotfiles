@@ -20,3 +20,7 @@ ssh/.ssh/*
 
 # Third-party plugins are git clones. plugins.txt records their URLs instead.
 omarchy/.config/omarchy/plugins/
+
+# Hashes of the last successful setup/ run. Describes this machine,
+# not the repo, so it is never committed.
+.state/

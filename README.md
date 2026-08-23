@@ -50,6 +50,7 @@ The `bootstrap` script does these steps:
 5. Make the symbolic links.
 6. Install the packages that the configuration assumes.
 7. Install the third-party plugins in `plugins.txt`.
+8. Run the scripts in `setup/` that changed since the last run.
 
 The test run looks for a file that is already at a target path. If it finds
 such a file, the script stops and changes nothing. If all the symbolic
@@ -249,6 +250,44 @@ Put the id and the URL in `plugins.txt`. Then commit `plugins.txt` and the
 Note: `omarchy-plugin-add` stops with an error when the plugin is already
 installed. Therefore `bootstrap` tests for the directory of each plugin first.
 
+## Setup scripts
+
+`setup/` holds scripts that change the system and not `$HOME`. It is not a stow
+package, and `bootstrap` never stows it.
+
+There is one script at present, `setup/plymouth`. Plymouth draws the screen
+during start-up, which includes the prompt for the disk encryption passphrase.
+The script gives a background colour, a text colour and a logo to
+`omarchy-plymouth-set`. That command also makes the SDDM login screen agree
+with those colours. It then builds the initramfs again, because the theme goes
+inside the initramfs. There is no second command to run.
+
+These scripts need root and they are slow, so `bootstrap` runs a script only
+when something changed. It makes a SHA-256 hash of the script. The hash also
+covers each file next to the script whose name starts with the name of the
+script. `setup/plymouth` and
+`setup/plymouth-logo.png` are therefore hashed together, and a change to either
+one causes a new run. `bootstrap` keeps the hash of the last good run in
+`.state/`. `.gitignore` excludes that directory, because the hash describes the
+machine and not the repo. A new machine has no `.state/`, so each script runs
+one time.
+
+Run the scripts again when nothing changed:
+
+```bash
+./bootstrap --force-setup
+```
+
+Start `./bootstrap` from a terminal. The scripts need a password for sudo, and
+`bootstrap` asks for it before the first script starts. A pipe or a scheduled
+job has no terminal. Such a run reports that it cannot ask for a password, and
+it makes no change.
+
+To change the start-up screen, edit the colours in `setup/plymouth` or replace
+`setup/plymouth-logo.png`. Then run `./bootstrap`. Look at a change first with
+`omarchy plymouth preview`, which writes a PNG and changes nothing. Remove the
+change with `omarchy plymouth reset`.
+
 ## What this repo does not contain
 
 - **Secrets and application data** — browser profiles, `1Password/`, `gh/`,
@@ -260,6 +299,8 @@ installed. Therefore `bootstrap` tests for the directory of each plugin first.
 - **`~/.config/omarchy/plugins/`** — each third-party plugin is its own git
   repo. `plugins.txt` records the git URL of each one, and `bootstrap` installs
   them.
+- **`.state/`** — the hash of the last good run of each script in `setup/`. It
+  describes this machine, so a new machine runs each script one time.
 - **`*.bak` and `*.omarchy-upgrade-to-*.bak`** — backup files from Omarchy.
   Their names contain a date and a time. See `.gitignore`.
 - **`~/.config/hypr/hyprlock.conf` and `hypridle.conf`** — Omarchy 4 does not
