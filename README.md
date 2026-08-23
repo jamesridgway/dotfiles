@@ -1,10 +1,10 @@
 # dotfiles
 
-Personal configuration for [Omarchy](https://omarchy.org/) 4, managed with
-[GNU Stow](https://www.gnu.org/software/stow/).
+Personal configuration for [Omarchy](https://omarchy.org/) 4.
+[GNU Stow](https://www.gnu.org/software/stow/) controls the files.
 
-Stow is what the [Omarchy Manual's Dotfiles chapter](https://omarchy.org/manual/dotfiles/)
-recommends. The manual's position is that `~/.config` is yours:
+The [Omarchy Manual's Dotfiles chapter](https://omarchy.org/manual/dotfiles/)
+tells you to use Stow. The manual says that `~/.config` is yours:
 
 > Omarchy is primarily configured through the so-called dotfiles that live in
 > `~/.config`. Those are considered your files for your changes.
@@ -14,23 +14,23 @@ recommends. The manual's position is that `~/.config` is yours:
 
 ## Layout
 
-Each top-level directory is a stow *package*. Inside it, the path mirrors where
-the files belong relative to `$HOME`:
+Each top-level directory is a stow *package*. In a package, the path is the
+same as the path below `$HOME`:
 
 ```
 omarchy/.config/omarchy/branding/about.txt   ->   ~/.config/omarchy/branding/about.txt
 ```
 
-| Package | Contents |
-|---|---|
-| `omarchy` | About/screensaver branding, `shell.json` (bar layout, idle), wallpaper, post-update hook |
-| `hypr` | `monitors.lua` plus per-host overrides in `hypr/hosts/` |
-| `kitty` | Terminal config |
-| `btop` | Resource monitor |
-| `tmux` | tmux config |
-| `git` | git aliases and defaults |
-| `autostart` | 1Password autostart entry |
-| `ssh` | 1Password SSH agent (`IdentityAgent`) |
+| Package     | Contents                                                                                         |
+|-------------|--------------------------------------------------------------------------------------------------|
+| `omarchy`   | About text, screensaver text, `shell.json` (bar layout, idle times), wallpaper, post-update hook |
+| `hypr`      | `monitors.lua` and the per-host files in `hypr/hosts/`                                           |
+| `kitty`     | Terminal configuration                                                                           |
+| `btop`      | Resource monitor                                                                                 |
+| `tmux`      | tmux configuration                                                                               |
+| `git`       | git aliases and defaults                                                                         |
+| `autostart` | 1Password autostart entry                                                                        |
+| `ssh`       | 1Password SSH agent (`IdentityAgent`)                                                            |
 
 ## Install on a new machine
 
@@ -41,108 +41,171 @@ cd ~/projects/dotfiles
 ./bootstrap
 ```
 
-Or stow packages individually:
+The `bootstrap` script does these steps:
+
+1. Find each package.
+2. Set the mode of `ssh/.ssh/config` to 600.
+3. Do a test run, and show the plan.
+4. Ask you for approval.
+5. Make the symbolic links.
+
+The test run looks for a file that is already at a target path. If it finds
+such a file, the script stops and changes nothing. If all the symbolic
+links are already correct, the script tells you that there is no work to do.
+
+To install the packages without the script:
 
 ```bash
 stow --no-folding -t "$HOME" omarchy hypr kitty btop tmux git autostart ssh
+chmod 600 ssh/.ssh/config
 ```
 
-`--no-folding` matters. Without it, Stow may replace a whole directory with a
-single symlink. With it, directories stay real and only individual files are
-linked — which is what you want under `~/.config/omarchy/`, because Omarchy
-writes its own files into those same directories and they must not end up in
-this repo.
+Always use `--no-folding`. Without this option, Stow can replace a full
+directory with one symbolic link. With this option, the directories stay, and
+Stow makes a symbolic link for each file. This is necessary in
+`~/.config/omarchy/`, because Omarchy writes its own files into the same
+directories. Those files must not go into this repo.
 
-To remove: `stow -D -t "$HOME" <package>`.
+To remove a package: `stow -D -t "$HOME" <package>`.
 
-## Why this survives `omarchy update`
+## How Omarchy writes to the linked files
 
-`omarchy-refresh-config` replaces a user config using `cp -f`, which writes
-*through* a symlink rather than replacing it. So when an update or migration
-touches a file tracked here, the symlink survives and the upstream change lands
-in this repo as a plain `git diff` — review it, then keep or revert. That
-visibility after every upgrade is the main reason to do this at all.
+Omarchy uses two different methods to write to these files. The results of the
+two methods are not the same.
+
+**Method 1: `cp -f`.** `omarchy-refresh-config` uses `cp -f`. This command
+writes through a symbolic link, and the link stays. The new content from
+Omarchy goes into this repo, where you see it as a usual `git diff`. Examine
+the change. Then keep it, or remove it. This is the most important reason for
+this setup.
+
+**Method 2: `sed -i`.** `omarchy-hyprland-monitor-scaling` uses `sed -i`. This
+command does not write through a symbolic link. It writes a temporary file and
+moves that file over the target. The result is a regular file in the position
+of the symbolic link. The repo then has no connection to `~/.config/`, and you
+get no error message.
+
+Do not try to stop method 2 with a multi-line table. A table on more than one
+line makes the `sed -i` search fail, but it also breaks Omarchy. Four Omarchy
+tools read `monitors.lua` with regular expressions. They understand only the
+layout of Omarchy's own file. If a parse fails, Omarchy restores an old scale
+after a lock, an unlock, or a similar event. The display then changes to a
+scale that you did not select, and no tool reports an error.
+
+Therefore `hypr/monitors.lua` keeps Omarchy's layout:
+
+- Keep the two `local omarchy_gdk_scale` and `local omarchy_monitor_scale`
+  lines. Keep each one at the start of a line. Do not change the spacing.
+- Keep each `hl.monitor()` call on one line.
+
+Therefore method 2 stays possible. This is acceptable, because the result is
+visible and easy to repair. `./bootstrap` reports a conflict for the file. This
+command makes the symbolic link again and keeps the new content:
+
+```bash
+stow --adopt --no-folding -t "$HOME" hypr
+git diff        # examine what Omarchy wrote, then keep it or remove it
+```
 
 ## Per-host configuration
 
-`hypr/monitors.lua` is shared by every machine. Monitor rules match on `desc:`
-(the panel's make and model), so a rule for a panel that isn't plugged in is
-simply inert, and all machines' rules coexist in one file. This also handles
-docking a laptop without any extra work.
+All machines use the same `hypr/monitors.lua`. The `output = ""` rule sets the
+scale of the panel of the machine that you are on. Leave that panel to this
+rule, because Omarchy writes the scale of the current panel to it.
 
-Find the string to match with:
+Give the panel of a different machine its own rule. Such a rule uses `desc:` to
+select a monitor. `desc:` is the make and the model of the panel. Therefore a
+rule for a panel that you did not connect has no effect. The rules for all
+machines stay in one file. This also gives correct results when you connect a
+laptop to a dock.
+
+To find the string for a rule:
 
 ```bash
 hyprctl -j monitors all | jq -r '.[].description'
 ```
 
-Settings that are genuinely global and can't be expressed per-monitor — such as
-`GDK_SCALE` — go in `hypr/hosts/<hostname>.lua`, loaded automatically if it
-exists and skipped silently if it doesn't.
+`GDK_SCALE` is not in a per-host file. It is `omarchy_gdk_scale` in
+`monitors.lua`, because `omarchy-hyprland-monitor-scaling` writes it together
+with the monitor scale. A second copy in a per-host file becomes stale.
 
-Three findings from setting this up, all verified on Hyprland 0.56.2:
+Put other global settings in `hypr/hosts/<hostname>.lua`. Hyprland loads this
+file if the file exists. If the file does not exist, Hyprland continues and
+gives no error message.
 
-- **A specific `desc:` rule beats the `output = ""` catch-all regardless of
-  order.** No need to sort rules by specificity.
-- **Hyprland silently snaps an invalid scale to the nearest valid one.** A scale
-  is valid only if it divides the panel's pixel dimensions into whole numbers.
-  On 2560x1600, `scale = 1.5` gives 1706.67px and is quietly rejected in favour
-  of 1.6. If a scale looks ignored, check the arithmetic before the rule.
-- **Do not use `os.getenv("HOSTNAME")` to pick the per-host file.** `HOSTNAME`
-  is a bash shell variable that bash never exports, so Hyprland's Lua sees
-  `nil`. Combined with `require_optional` — which skips a missing module without
-  complaint — the per-host file silently never loads and nothing reports an
-  error. Read `/etc/hostname` instead.
+These are three results of tests with Hyprland 0.56.2:
+
+- **A `desc:` rule has priority over the `output = ""` fallback rule.** The
+  sequence of the rules has no effect. Do not sort the rules.
+- **Hyprland changes an incorrect scale to the nearest correct scale, and gives
+  no message.** A scale is correct only if it divides the pixel dimensions of
+  the panel into whole numbers. On a 2560x1600 panel, a scale of 1.5 gives
+  1706.67 pixels, and Hyprland changes the scale to 1.6. If Hyprland does not
+  use the scale that you set, do the calculation first. Then examine the rule.
+- **Do not use `os.getenv("HOSTNAME")` to select the per-host file.**
+  `HOSTNAME` is a bash shell variable, and bash does not export it. Therefore
+  the Lua code in Hyprland reads `nil`. `require_optional` gives no error for a
+  module that it cannot find. Therefore the per-host file never loads, and
+  nothing tells you about the failure. Read `/etc/hostname` in place of the
+  variable.
 
 ## SSH
 
-`~/.ssh/config` points ssh at 1Password's agent, which is what makes signing and
-git-over-ssh work without a key on disk:
+`~/.ssh/config` tells ssh to use the 1Password agent:
 
 ```
 Host *
 	IdentityAgent ~/.1password/agent.sock
 ```
 
-This replaced an older `export SSH_AUTH_SOCK=...` line in `.zshrc` (commit
-`b8ff26b`, since scrapped along with zsh). `IdentityAgent` is better: it scopes
-the agent to ssh instead of exporting it into every process.
+With this setting, git-over-ssh and git signature operations work, and no
+private key is on the disk.
 
-One caveat — ssh refuses a config file that is group- or world-writable, and git
-records only the executable bit, so a fresh clone lands at `644`. `bootstrap`
-runs `chmod 600` on it; if you stow the package by hand, do that too.
+This setting replaced an `export SSH_AUTH_SOCK=...` line in `.zshrc`. Commit
+`b8ff26b` added that line, and commit `b3b3ad9` deleted it with the other zsh
+files. `IdentityAgent` is better, because it limits the agent to ssh. The
+environment variable gave the agent to all processes.
 
-## What is deliberately not tracked
+Note: ssh does not accept a configuration file that the group or other users
+can write to. Git records only the executable bit. Therefore a new clone gives
+mode 644. The `bootstrap` script sets mode 600. If you use `stow` directly, set
+the mode yourself.
 
-- **Secrets and app state** — browser profiles, `1Password/`, `gh/`, `k9s/`,
-  cloud credentials. `ssh/` tracks `config` and nothing else; `.gitignore`
-  excludes the rest of `~/.ssh` so a private key cannot be committed by
-  accident.
-- **`~/.config/omarchy/current/`** — Omarchy-managed symlinks, regenerated by
-  `omarchy theme set`.
-- **`*.bak` / `*.omarchy-upgrade-to-*.bak`** — Omarchy's own timestamped
-  backups. See `.gitignore`.
-- **`~/.config/hypr/hyprlock.conf` and `hypridle.conf`** — dead under Omarchy 4.
-  Locking now goes through `omarchy-shell lock lock` (Quickshell) and idle
-  timings come from `shell.json`'s `idle.lock` / `idle.screensaver`. Neither
-  binary runs on this system.
+## What this repo does not contain
+
+- **Secrets and application data** — browser profiles, `1Password/`, `gh/`,
+  `k9s/`, and cloud credentials. The `ssh` package contains `config` only.
+  `.gitignore` excludes all other files in `~/.ssh`. Therefore you cannot
+  commit a private key by accident.
+- **`~/.config/omarchy/current/`** — Omarchy makes these symbolic links again
+  each time that you run `omarchy theme set`.
+- **`*.bak` and `*.omarchy-upgrade-to-*.bak`** — backup files from Omarchy.
+  Their names contain a date and a time. See `.gitignore`.
+- **`~/.config/hypr/hyprlock.conf` and `hypridle.conf`** — Omarchy 4 does not
+  use these files. The `hyprlock` and `hypridle` programs are not installed on
+  this system. Quickshell locks the screen with `omarchy-shell lock lock`. The
+  idle times are the `idle.lock` and `idle.screensaver` values in `shell.json`.
 
 ## Branding
 
-The About and lock/screensaver art are plain UTF-8 braille text, not images —
-`omarchy branding about image` runs a PNG or SVG through `omarchy-transcode-ascii`
-at 54x26 and stores the result. That means they diff cleanly in git.
+The About art and the screensaver art are UTF-8 braille characters, not images.
+Therefore git shows the differences between two versions correctly.
+
+`omarchy branding about image` reads a PNG file or an SVG file. It sends the
+file to `omarchy-transcode-ascii` with a width of 54 columns and a height of 26
+rows. Then it writes the result.
 
 ```bash
-omarchy branding about image        # regenerate from an image file
+omarchy branding about image        # make the art again from an image file
 omarchy branding about text         # edit the art directly
-omarchy branding about reset        # restore Omarchy's default
+omarchy branding about reset        # put back the default art from Omarchy
 ```
 
-The same three subcommands exist for `omarchy branding screensaver`.
+`omarchy branding screensaver` has the same three commands.
 
 ## History
 
-Everything before commit `d41dc01` is the previous Ubuntu/GNOME-era setup
-(powerline, terminator, zsh, Test Kitchen CI). It was cleared rather than
-migrated, and remains available in history at `261d867`.
+Commit `b3b3ad9` deleted the previous configuration for Ubuntu and GNOME. That
+configuration used powerline, terminator, zsh, and Test Kitchen CI. This repo
+did not move those files to Omarchy. To read them, examine commit `b8ff26b`.
+That commit is the last commit before the deletion.
