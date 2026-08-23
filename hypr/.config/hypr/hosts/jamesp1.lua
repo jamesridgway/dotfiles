@@ -2,9 +2,12 @@
 -- Loaded from hypr/monitors.lua via require_optional, so this file is only
 -- picked up on the machine whose hostname matches its name.
 --
--- Monitor geometry does NOT belong here -- put that in monitors.lua as a
--- `desc:` rule so it follows the panel rather than the machine. This file is
--- for settings that are genuinely global and can't be expressed per-output.
+-- Monitor geometry does NOT belong here. Put a panel's scale in monitors.lua,
+-- so that Omarchy's scaling tools can find and rewrite it. This file is for
+-- settings that are global and cannot be expressed per-output.
+--
+-- GDK_SCALE used to live here. It moved to monitors.lua as omarchy_gdk_scale,
+-- because omarchy-hyprland-monitor-scaling rewrites it together with the
+-- monitor scale. Setting it in both files would leave this copy stale.
 
--- 2560x1600 panel at 1.6 scale; GTK apps need the integer step above it.
-hl.env("GDK_SCALE", "2")
+-- (no host-specific settings at present)
