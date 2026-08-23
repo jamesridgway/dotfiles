@@ -54,6 +54,13 @@ The test run looks for a file that is already at a target path. If it finds
 such a file, the script stops and changes nothing. If all the symbolic
 links are already correct, the script tells you that there is no work to do.
 
+The script exits with status 0 when it finds no problem. It exits with status 1
+when it finds a conflict, or when a plugin does not install. A plugin that does
+not install stops neither the other plugins nor the rest of the run.
+
+The script writes colour when the output goes to a terminal. It writes plain
+text to a file or to a pipe, and it obeys the `NO_COLOR` variable.
+
 To install the packages without the script:
 
 ```bash
