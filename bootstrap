@@ -380,6 +380,10 @@ install_plugins
 # gitignored: it describes this machine, not the repo. A fresh clone has no
 # .state/, so every script runs once on a new machine.
 #
+# Because the hashes decide everything before any privileged work starts, a
+# bootstrap with nothing to apply never asks for a password: sudo is claimed
+# lazily, on the first script that is actually going to run.
+#
 # Pass --force-setup to run them whatever the hashes say.
 # ---------------------------------------------------------------------------
 
