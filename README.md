@@ -52,9 +52,20 @@ The `bootstrap` script does these steps:
 7. Install the third-party plugins in `plugins.txt`.
 8. Run the scripts in `setup/` that changed since the last run.
 
-The test run looks for a file that is already at a target path. If it finds
-such a file, the script stops and changes nothing. If all the symbolic
-links are already correct, the script tells you that there is no work to do.
+The test run looks for a file that is already at a target path. The script
+compares each such file with the copy in this repo. When every one of these
+files is equal to its copy, byte for byte, the script offers to replace them
+with symbolic links. It moves each file aside before it makes the links, and
+it puts each file back if the run stops for any reason before the links exist.
+
+When any of these files differs from its copy, the script stops and changes
+nothing. It lists every file with a mark: `≠` for a file that differs, and `=`
+for a file that is equal and that the script will handle on the next run. For
+each `≠` file, delete the file to keep the repo's version, or run
+`stow --adopt` (see below) to keep the file's content.
+
+If all the symbolic links are already correct, the script tells you that there
+is no work to do.
 
 The script exits with status 0 when it finds no problem. It exits with status 1
 when it finds a conflict, or when a package or a plugin does not install. A

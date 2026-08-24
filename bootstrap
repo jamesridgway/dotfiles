@@ -115,14 +115,108 @@ heading "Symlinks"
 # stow sends its plan, its conflict report and its simulation banner all to
 # stderr, so capture that rather than letting it leak straight to the terminal.
 # A conflict exits non-zero; a clean run exits 0.
-if ! plan=$(stow -n -v --no-folding -t "$HOME" "${packages[@]}" 2>&1); then
+dry_run() { stow -n -v --no-folding -t "$HOME" "${packages[@]}" 2>&1; }
+
+# A conflicting file whose contents already match the repo is moved aside
+# rather than deleted, and put back if this run ends before stow has made its
+# symlink -- an abort at either prompt, or a stow failure, must not cost a
+# working ~/.ssh/config its contents.
+backup_dir=""
+replaced=()
+stow_applied=0
+
+restore_replaced() {
+  local t
+  for t in "${replaced[@]}"; do
+    if [[ -e "$backup_dir/$t" && ! -e "$HOME/$t" ]]; then
+      mkdir -p "$HOME/$(dirname "$t")"
+      mv "$backup_dir/$t" "$HOME/$t"
+    fi
+  done
+}
+
+if ! plan=$(dry_run); then
+  # A real file sits where a symlink should go. Stow's report names the file
+  # but not what to do about it, and its wording moved between releases, so
+  # parse out each target and decide: a file that matches the repo's copy byte
+  # for byte can simply become the symlink; anything else needs a human.
+  re_since='over existing target (.+) since neither a link'           # stow >= 2.4
+  re_colon='existing target is neither a link nor a directory: (.+)$' # stow <= 2.3
+  re_bullet='^[[:space:]]*\*[[:space:]]*(.*)$'
+
+  identical=() differing=() unresolvable=()
+  while IFS= read -r line; do
+    if [[ $line =~ $re_since || $line =~ $re_colon ]]; then
+      target="${BASH_REMATCH[1]}"
+    elif [[ $line =~ $re_bullet ]]; then
+      unresolvable+=("${BASH_REMATCH[1]}") # a conflict this script does not understand
+      continue
+    else
+      continue # stow's banner and summary lines
+    fi
+
+    repo_file=""
+    for pkg in "${packages[@]}"; do
+      [[ -f "$pkg/$target" ]] && repo_file="$pkg/$target"
+    done
+
+    if [[ -z $repo_file ]]; then
+      unresolvable+=("$target: no package in this repo provides it")
+    elif cmp -s "$repo_file" "$HOME/$target"; then
+      identical+=("$target|$repo_file")
+    else
+      differing+=("$target|$repo_file")
+    fi
+  done <<<"$plan"
+
+  if [[ ${#differing[@]} -gt 0 || ${#unresolvable[@]} -gt 0 ]]; then
+    printf '\n  %s %s\n\n' "${RED}✗${RESET}" "${BOLD}Conflicts found. Nothing has been changed.${RESET}" >&2
+    for entry in "${differing[@]}"; do
+      target="${entry%%|*}" repo_file="${entry#*|}"
+      printf '    %s %s\n' "${RED}${BOLD}≠${RESET}" "${BOLD}~/$target${RESET}${DIM} differs from ${RESET}$repo_file" >&2
+      printf '        %s\n' "${DIM}diff ~/$target $repo_file${RESET}" >&2
+    done
+    for entry in "${unresolvable[@]}"; do
+      printf '    %s %s\n' "${RED}${BOLD}✗${RESET}" "$entry" >&2
+    done
+    for entry in "${identical[@]}"; do
+      target="${entry%%|*}"
+      printf '    %s %s\n' "${GREEN}=${RESET}" "~/$target${DIM} matches the repo, and is replaced automatically once the files above are dealt with${RESET}" >&2
+    done
+    printf '\n    %s\n' "${DIM}For each ${RESET}${RED}≠${RESET}${DIM} file, keep one side or the other:${RESET}" >&2
+    printf '      %s\n' "${DIM}the repo's version:   delete the file, then run ./bootstrap again${RESET}" >&2
+    printf '      %s\n' "${DIM}this machine's file:  stow --adopt --no-folding -t \"\$HOME\" <package> && git diff${RESET}" >&2
+    printf '\n' >&2
+    exit 1
+  fi
+
+  info "${#identical[@]} conflicting file(s) already match this repo byte for byte:"
   printf '\n'
-  printf '%s\n' "$plan" | sed 's/^/    /' >&2
-  die "Conflicts found. Nothing has been changed." \
-    "A real file is sitting where a symlink should go." \
-    "Move or delete it, then run this again." \
-    "To keep the file's contents instead, adopt it into this repo:" \
-    "stow --adopt --no-folding -t \"\$HOME\" <package> && git diff"
+  for entry in "${identical[@]}"; do
+    target="${entry%%|*}" repo_file="${entry#*|}"
+    printf '    %s %s %s\n' "${GREEN}=${RESET}" "${BOLD}~/$target${RESET}" "${DIM}same as $repo_file${RESET}"
+  done
+  printf '\n'
+  read -rp "  ${BOLD}Replace with symlinks?${RESET} [y/N] " reply
+  if [[ ${reply,,} != y ]]; then
+    printf '\n  %s\n\n' "${YELLOW}!${RESET} Aborted, nothing changed."
+    exit 0
+  fi
+
+  backup_dir=$(mktemp -d)
+  trap 'if [[ $stow_applied -eq 0 ]]; then restore_replaced; fi; rm -rf "$backup_dir"' EXIT
+  for entry in "${identical[@]}"; do
+    target="${entry%%|*}"
+    mkdir -p "$backup_dir/$(dirname "$target")"
+    mv "$HOME/$target" "$backup_dir/$target"
+    replaced+=("$target")
+  done
+
+  if ! plan=$(dry_run); then
+    printf '%s\n' "$plan" | sed 's/^/    /' >&2
+    die "stow still reports conflicts. The replaced files have been put back."
+  fi
+  ok "moved ${#replaced[@]} file(s) aside; their symlinks are in the plan below"
 fi
 
 # Drop stow's "in simulation mode" banner. It describes the dry run rather than
@@ -141,7 +235,11 @@ else
   printf '\n'
   read -rp "  ${BOLD}Apply?${RESET} [y/N] " reply
   if [[ ${reply,,} != y ]]; then
-    printf '\n  %s\n\n' "${YELLOW}!${RESET} Aborted, nothing changed."
+    if [[ ${#replaced[@]} -gt 0 ]]; then
+      printf '\n  %s\n\n' "${YELLOW}!${RESET} Aborted; the files moved aside were put back."
+    else
+      printf '\n  %s\n\n' "${YELLOW}!${RESET} Aborted, nothing changed."
+    fi
     exit 0
   fi
   printf '\n'
@@ -150,6 +248,7 @@ else
     die "stow failed. Some links may not have been made."
   fi
   printf '%s\n' "$output" | sed "s/^/    ${DIM}/;s/\$/${RESET}/"
+  stow_applied=1
   ok "stowed $links files"
 fi
 
