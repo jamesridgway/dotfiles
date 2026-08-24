@@ -282,12 +282,20 @@ installed. Therefore `bootstrap` tests for the directory of each plugin first.
 `setup/` holds scripts that change the system and not `$HOME`. It is not a stow
 package, and `bootstrap` never stows it.
 
-There is one script at present, `setup/plymouth`. Plymouth draws the screen
-during start-up, which includes the prompt for the disk encryption passphrase.
-The script gives a background colour, a text colour and a logo to
-`omarchy-plymouth-set`. That command also makes the SDDM login screen agree
-with those colours. It then builds the initramfs again, because the theme goes
-inside the initramfs. There is no second command to run.
+There are two scripts at present.
+
+`setup/plymouth` — Plymouth draws the screen during start-up, which includes
+the prompt for the disk encryption passphrase. The script gives a background
+colour, a text colour and a logo to `omarchy-plymouth-set`. That command also
+makes the SDDM login screen agree with those colours. It then builds the
+initramfs again, because the theme goes inside the initramfs. There is no
+second command to run.
+
+`setup/wallpaper` — the stow phase links the Curve wallpaper from the
+`omarchy` package into `~/.config/omarchy/backgrounds/tokyo-night/`, which
+adds it to the Omarchy background switcher (`Super+Ctrl+Space`). This script
+then makes it the current background with `omarchy-theme-bg-set`. On a machine
+whose theme is not tokyo-night, the script changes nothing.
 
 These scripts need root and they are slow, so `bootstrap` runs a script only
 when something changed. It makes a SHA-256 hash of the script. The hash also

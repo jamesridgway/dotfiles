@@ -1,0 +1,51 @@
+#!/bin/bash
+# Set the Curve wallpaper as the current background.
+#
+# Omarchy reads user wallpapers from ~/.config/omarchy/backgrounds/<theme>/,
+# where the stow phase has already linked the image from the omarchy package.
+# That makes the image available in the background switcher (Super+Ctrl+Space),
+# but it does not put it on screen. omarchy-theme-bg-set does that: it points
+# the ~/.local/state/omarchy/current/background symlink at the image and tells
+# omarchy-shell to redraw.
+#
+# The wallpaper belongs to the tokyo-night theme. On a machine that runs a
+# different theme this script does nothing, so a theme choice made on one
+# machine is not overridden by bootstrap on another.
+#
+# Undo with: omarchy theme bg next
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+backgrounds_dir="$HOME/.config/omarchy/backgrounds/tokyo-night"
+target="$backgrounds_dir/thecurve-midnight-facets-3840x2160.png"
+
+if [[ ! -e $target ]]; then
+  echo "wallpaper: not found: $target (did the stow phase run?)" >&2
+  exit 1
+fi
+
+# Remove links whose repo file is gone. Deleting an image from the repo leaves
+# its stow link behind, because bootstrap stows and never restows.
+find "$backgrounds_dir" -maxdepth 1 -xtype l -delete
+
+theme=$(cat "$HOME/.local/state/omarchy/current/theme.name" 2>/dev/null || true)
+if [[ $theme != tokyo-night ]]; then
+  echo "wallpaper: theme is '${theme:-unset}', not tokyo-night; leaving the background alone"
+  exit 0
+fi
+
+current=$(realpath "$HOME/.local/state/omarchy/current/background" 2>/dev/null || true)
+if [[ $current == "$(realpath "$target")" ]]; then
+  echo "wallpaper: already set"
+  exit 0
+fi
+
+if ! command -v omarchy-theme-bg-set >/dev/null; then
+  echo "wallpaper: omarchy-theme-bg-set is not installed" >&2
+  exit 1
+fi
+
+echo "wallpaper: setting $(basename "$target")"
+omarchy-theme-bg-set "$target"
