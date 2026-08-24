@@ -84,6 +84,15 @@ hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D63P0JNS", mode = "preferr
 hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D63P0ACS", mode = "preferred", position = "5120x0", scale = 1 })
 hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D7B70X9S", mode = "preferred", position = "7680x0", scale = 1 })
 
+-- jamestccsbox: three DELL U2415 at 1920x1200, side by side, left to right.
+-- Same reasoning as jamesdesktop: the panels are identical, so only the serial
+-- can tell them apart, and positions are pinned so the arrangement survives a
+-- replug and a rebuild. The row is centred around x=0 because that is what the
+-- HyprMon-drawn arrangement already was; negative coordinates are fine.
+hl.monitor({ output = "desc:Dell Inc. DELL U2415 7MT0177S3UNL", mode = "preferred", position = "-2976x0", scale = 1 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2415 07MT01624065L", mode = "preferred", position = "-1056x0", scale = 1 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2415 07MT016231KCL", mode = "preferred", position = "864x0", scale = 1 })
+
 -- HyprMon (the `hyprmon` TUI, installed by ./bootstrap) writes its own rules to
 -- ~/.config/hypr/hyprmon.lua and appends `require("hyprmon")` to the END of
 -- hyprland.lua. By behaviour 2 above, those rules therefore beat the three
