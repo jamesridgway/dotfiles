@@ -383,31 +383,53 @@ install_plugins
 # Pass --force-setup to run them whatever the hashes say.
 # ---------------------------------------------------------------------------
 
+# Claim a sudo timestamp the first time a setup script actually has work to do,
+# and remember the answer so the rest of the run reuses it.
+#
+# Working out what needs to run is only hashing and file reads, so the usual
+# bootstrap -- where every script is unchanged -- never reaches this and never
+# asks for a password.
+#
+# Claiming it up front still matters once there is work: it keeps the prompt out
+# of the middle of a slow run, and a run with no terminal to ask on -- a pipe, a
+# cron job -- would otherwise leave sudo waiting for a password that can never
+# arrive, hanging the whole bootstrap instead of failing.
+setup_sudo=unclaimed
+
+ensure_setup_sudo() {
+  case $setup_sudo in
+    ready) return 0 ;;
+    failed) return 1 ;;
+  esac
+
+  if sudo -n true 2>/dev/null; then
+    setup_sudo=ready
+    return 0
+  fi
+
+  if [[ ! -t 0 ]]; then
+    warn "setup/ needs sudo, and there is no terminal to ask for a password on"
+    info "run ./bootstrap from a terminal to apply them"
+    setup_sudo=failed
+    return 1
+  fi
+
+  info "the scripts below need root"
+  if ! sudo -v; then
+    bad "could not get sudo; skipping setup scripts"
+    setup_sudo=failed
+    return 1
+  fi
+
+  setup_sudo=ready
+}
+
 run_setup_scripts() {
   local state_dir=".state" script name hash stored
 
   if [[ ! -d setup ]]; then
     info "no setup/ directory"
     return 0
-  fi
-
-  # These scripts need root, and they call sudo several times. Claim the
-  # timestamp once, up front, for two reasons. It keeps the password prompt at
-  # the start rather than somewhere in the middle of a slow run. More
-  # importantly, a run with no terminal to ask on -- a pipe, a cron job -- would
-  # otherwise leave sudo waiting for a password that can never arrive, and the
-  # whole bootstrap would hang instead of failing.
-  if ! sudo -n true 2>/dev/null; then
-    if [[ ! -t 0 ]]; then
-      warn "setup/ needs sudo, and there is no terminal to ask for a password on"
-      info "run ./bootstrap from a terminal to apply them"
-      return 0
-    fi
-    info "the scripts below need root"
-    if ! sudo -v; then
-      bad "could not get sudo; skipping setup scripts"
-      return 0
-    fi
   fi
 
   shopt -s nullglob
@@ -426,6 +448,10 @@ run_setup_scripts() {
       ok "$name ${DIM}unchanged since last run${RESET}"
       continue
     fi
+
+    # Past this point the script is going to run, so this is the first moment
+    # root is genuinely needed.
+    ensure_setup_sudo || return 0
 
     if [[ $hash == "$stored" ]]; then
       work "$name ${DIM}forced${RESET}"
