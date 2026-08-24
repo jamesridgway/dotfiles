@@ -36,5 +36,12 @@
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/usr/bin/gh auth git-credential
+
+# Per-machine overrides (e.g. a work email) live in ~/.config/git/config.local,
+# which is not tracked in this repo. Git ignores a missing include, so machines
+# without one get the defaults above. Keep this include last: later values win,
+# so everything above can be overridden per machine.
+[include]
+	path = config.local

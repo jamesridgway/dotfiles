@@ -181,6 +181,22 @@ Put other global settings in `hypr/hosts/<hostname>.lua`. Hyprland loads this
 file if the file exists. If the file does not exist, Hyprland continues and
 gives no error message.
 
+Git has its own per-host mechanism. The last lines of `git/.config/git/config`
+include `~/.config/git/config.local`. That file is not in this repo. Write the
+settings of one machine into it, for example a work email:
+
+```ini
+[user]
+	email = james@example.com
+```
+
+Git reads the include after the rest of the config, so a value in
+`config.local` wins. Git gives no error when the file does not exist, so a
+machine without the file uses the defaults from this repo. Note that
+`git config --global user.email` does not show the result, because `--global`
+reads one file without its includes. Use `git config user.email` to see the
+value that git really uses.
+
 These are four results from Hyprland 0.56.2. The first two come from
 `CMonitorRuleManager::get()` and `CMonitor::matchesStaticSelector()` in the
 source code:
