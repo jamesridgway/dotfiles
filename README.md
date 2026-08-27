@@ -24,7 +24,7 @@ omarchy/.config/omarchy/branding/about.txt   ->   ~/.config/omarchy/branding/abo
 | Package     | Contents                                                                                         |
 |-------------|--------------------------------------------------------------------------------------------------|
 | `omarchy`   | About text, screensaver text, `shell.json` (bar layout, idle times), wallpaper, post-update hook |
-| `hypr`      | `monitors.lua` and the per-host files in `hypr/hosts/`                                           |
+| `hypr`      | `monitors.lua`, the per-host files in `hypr/hosts/`, the workspace layout in `hypr/lib/`         |
 | `kitty`     | Terminal configuration                                                                           |
 | `btop`      | Resource monitor                                                                                 |
 | `tmux`      | tmux configuration                                                                               |
@@ -177,8 +177,8 @@ that sequence is not the sequence on the desk.
 `monitors.lua`, because `omarchy-hyprland-monitor-scaling` writes it together
 with the monitor scale. A second copy in a per-host file becomes stale.
 
-Put other global settings in `hypr/hosts/<hostname>.lua`. Hyprland loads this
-file if the file exists. If the file does not exist, Hyprland continues and
+Put other per-machine settings in `hypr/hosts/<hostname>.lua`. Hyprland loads
+this file if the file exists. If the file does not exist, Hyprland continues and
 gives no error message.
 
 Git has its own per-host mechanism. The last lines of `git/.config/git/config`
@@ -222,6 +222,59 @@ source code:
   module that it cannot find. Therefore the per-host file never loads, and
   nothing tells you about the failure. Read `/etc/hostname` in place of the
   variable.
+
+### Workspaces on the three-monitor machines
+
+`jamestccsbox` and `jamesdesktop` each have three panels side by side. Both pin
+the same workspace numbers to the same positions on the desk:
+
+| Left    | Centre     | Right    |
+|---------|------------|----------|
+| 5 6 7   | 1 2 3 4    | 8 9 10   |
+
+Hyprland otherwise gives workspaces to monitors in the sequence that it finds
+the monitors. Therefore `Super + 3` reaches a different screen after a reboot or
+a replug. The rules make the number a place instead.
+
+`hypr/lib/workspaces.lua` holds the layout. Each host file calls it with the
+three `desc:` strings of that machine:
+
+```lua
+require("hypr.lib.workspaces").three_across({
+  left = "desc:Dell Inc. DELL U2415 7MT0177S3UNL",
+  centre = "desc:Dell Inc. DELL U2415 07MT01624065L",
+  right = "desc:Dell Inc. DELL U2415 07MT016231KCL",
+})
+```
+
+The first workspace of each row is that monitor's default: 5 on the left, 1 in
+the centre, 8 on the right. These are the workspaces that a session starts with.
+
+The workspaces are not persistent. An empty workspace leaves the bar until
+something opens on it. The rule still holds, so `Super + 6` makes workspace 6 on
+the left screen again. To show all ten at all times, add `persistent = true` to
+the `hl.workspace_rule` call in `hypr/lib/workspaces.lua`.
+
+The layout is in the per-host files and not in `hypr/monitors.lua`, unlike the
+monitor rules. A monitor rule for a panel that you did not connect has no
+effect. A workspace rule for a panel that you did not connect does not behave
+the same way, because Hyprland must put the workspace on some monitor.
+
+A rule applies when Hyprland makes the workspace. A workspace that already
+exists stays on its monitor until the next login.
+
+Test the rules with:
+
+```bash
+hyprctl -j workspacerules | jq -r '.[] | "\(.workspaceString) -> \(.monitor)"'
+hyprctl dispatch 'hl.dsp.focus({ workspace = "6" })'
+hyprctl -j monitors | jq -r '.[] | select(.focused) | .name'
+```
+
+Note the Lua form of `hyprctl dispatch`. Hyprland 0.56 reads the configuration
+with a Lua parser, and it rejects the old `hyprctl dispatch workspace 6` with
+`')' expected near '6'`. `hyprctl keyword` gives `keyword can't work with
+non-legacy parsers`, and `hyprctl eval` takes its place.
 
 ## SSH
 
