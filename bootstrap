@@ -264,6 +264,14 @@ fi
 # hypr/monitors.lua and applies with or without it -- read the note at the foot
 # of that file before you use it, because HyprMon writes rules that override
 # the ones this repo tracks.
+#
+# todoist is what Super + Shift + T opens. hypr/bindings.lua names the desktop
+# entry that this package installs, so on a machine without the package the key
+# does nothing at all and Hyprland reports no error for it.
+#
+# networkmanager supplies nmcli, which the VPN work uses. Nothing on this
+# system depends on the package -- pacman reports `Required By: None` -- so it
+# can genuinely be absent, and it belongs on this list with the others.
 # ---------------------------------------------------------------------------
 
 heading "Packages"
@@ -290,31 +298,44 @@ aur_helper() {
 # PKGBUILD, and sudo asks for a password; both need the terminal, so the output
 # is left alone rather than captured the way the plugin output is.
 ensure_package() {
-  local pkg="$1" bin="$2" helper
+  local pkg="$1" bin="$2" helper source
+  local -a installer
 
   if command -v "$bin" >/dev/null; then
     ok "$pkg ${DIM}already installed${RESET}"
     return 0
   fi
 
-  if ! helper=$(aur_helper); then
-    bad "$pkg ${DIM}is missing, and neither yay nor paru is installed${RESET}"
+  # An AUR helper installs from the repos too, so prefer it whenever there is
+  # one. Without a helper, a package that is in the repos can still come from
+  # pacman, which is the case for networkmanager. Only an AUR package --
+  # hyprmon-bin, todoist-appimage -- really needs the helper.
+  if helper=$(aur_helper); then
+    installer=("$helper" -S --needed)
+    source="$helper"
+  elif pacman -Si "$pkg" >/dev/null 2>&1; then
+    installer=(sudo pacman -S --needed)
+    source="pacman"
+  else
+    bad "$pkg ${DIM}is missing, it is not in the repos, and neither yay nor paru is installed${RESET}"
     info "install an AUR helper, or install $pkg yourself, then run this again"
     return 0
   fi
 
-  work "$pkg ${DIM}installing with $helper${RESET}"
+  work "$pkg ${DIM}installing with $source${RESET}"
   printf '\n'
-  if "$helper" -S --needed "$pkg"; then
+  if "${installer[@]}" "$pkg"; then
     printf '\n'
     ok "$pkg ${DIM}installed${RESET}"
   else
     printf '\n'
-    bad "$pkg ${DIM}could not be installed with $helper${RESET}"
+    bad "$pkg ${DIM}could not be installed with $source${RESET}"
   fi
 }
 
 ensure_package hyprmon-bin hyprmon
+ensure_package todoist-appimage todoist
+ensure_package networkmanager nmcli
 
 # ---------------------------------------------------------------------------
 # Plugins

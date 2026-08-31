@@ -75,13 +75,25 @@ plugins nor the rest of the run.
 ## Packages
 
 Step 6 installs the tools that the configuration in this repo assumes, but that
-no package depends on. At present there is one: `hyprmon-bin`, which supplies
-the `hyprmon` command.
+no package depends on. There are three:
 
-The step tests for the command, not for the package. It installs a missing one
-with `yay`, or with `paru` if there is no `yay`. It does not pass
-`--noconfirm`, because an AUR build asks you to read a `PKGBUILD` and `sudo`
-asks for a password.
+| Package            | Command   | Why it is here                              |
+|--------------------|-----------|---------------------------------------------|
+| `hyprmon-bin`      | `hyprmon` | Arranges monitors in a TUI                  |
+| `todoist-appimage` | `todoist` | `Super + Shift + T` opens its desktop entry |
+| `networkmanager`   | `nmcli`   | The VPN work uses `nmcli`                   |
+
+The step tests for the command, not for the package, because the command is
+what the configuration actually needs.
+
+It installs a missing one with `yay`, or with `paru` if there is no `yay`. An
+AUR helper installs from the repos as well, so one helper covers all three.
+Without a helper, a package that is in the repos still comes from
+`sudo pacman -S --needed`, which is the case for `networkmanager`. Only an AUR
+package -- `hyprmon-bin` and `todoist-appimage` -- really needs a helper, and a
+package that cannot be installed is reported and does not stop the run. The
+install does not pass `--noconfirm`, because an AUR build asks you to read a
+`PKGBUILD` and `sudo` asks for a password.
 
 Note that HyprMon writes monitor rules to `~/.config/hypr/hyprmon.lua` and adds
 `require("hyprmon")` to the end of `hyprland.lua`. Hyprland gives the last rule
