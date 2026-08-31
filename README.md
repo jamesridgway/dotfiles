@@ -21,16 +21,16 @@ same as the path below `$HOME`:
 omarchy/.config/omarchy/branding/about.txt   ->   ~/.config/omarchy/branding/about.txt
 ```
 
-| Package     | Contents                                                                                         |
-|-------------|--------------------------------------------------------------------------------------------------|
-| `omarchy`   | About text, screensaver text, `shell.json` (bar layout, idle times), wallpaper, post-update hook |
-| `hypr`      | `monitors.lua`, the per-host files in `hypr/hosts/`, the workspace layout in `hypr/lib/`         |
-| `kitty`     | Terminal configuration                                                                           |
-| `btop`      | Resource monitor                                                                                 |
-| `tmux`      | tmux configuration                                                                               |
-| `git`       | git aliases and defaults                                                                         |
-| `autostart` | 1Password autostart entry                                                                        |
-| `ssh`       | 1Password SSH agent (`IdentityAgent`)                                                            |
+| Package     | Contents                                                                                                 |
+|-------------|----------------------------------------------------------------------------------------------------------|
+| `omarchy`   | About text, screensaver text, `shell.json` (bar layout, idle times), wallpaper, post-update hook         |
+| `hypr`      | `bindings.lua`, `monitors.lua`, the per-host files in `hypr/hosts/`, the workspace layout in `hypr/lib/` |
+| `kitty`     | Terminal configuration                                                                                   |
+| `btop`      | Resource monitor                                                                                         |
+| `tmux`      | tmux configuration                                                                                       |
+| `git`       | git aliases and defaults                                                                                 |
+| `autostart` | 1Password autostart entry                                                                                |
+| `ssh`       | 1Password SSH agent (`IdentityAgent`)                                                                    |
 
 ## Install on a new machine
 
@@ -276,6 +276,58 @@ with a Lua parser, and it rejects the old `hyprctl dispatch workspace 6` with
 `')' expected near '6'`. `hyprctl keyword` gives `keyword can't work with
 non-legacy parsers`, and `hyprctl eval` takes its place.
 
+## Keybindings
+
+`hypr/bindings.lua` holds the bindings of this repo. Hyprland loads it after
+Omarchy's own bindings, so a key that Omarchy leaves free needs nothing more
+than an `o.bind` line. A key that Omarchy already uses needs an `hl.unbind`
+line first, because a second binding for the same key does not replace the
+first one.
+
+There are two bindings at present:
+
+| Key                 | Application | Note                                    |
+|---------------------|-------------|-----------------------------------------|
+| `Super + Shift + S` | Slack       | Omarchy uses this key for Google Maps   |
+| `Super + Shift + T` | Todoist     | Free in Omarchy's defaults              |
+
+Slack therefore takes its key with an `hl.unbind` first. Google Maps stays
+available from the Omarchy menu.
+
+Each binding gives `focus` as well as `launch`, which makes the key
+launch-or-focus. The first press starts the application. A second press goes
+to the window that is already open, in place of a second copy. Omarchy matches
+the pattern against the class of the window and ignores case. To find the
+class of a window:
+
+```bash
+hyprctl clients -j | jq -r '.[].class'
+```
+
+Both bindings name a desktop entry ID (`slack.desktop`, `todoist.desktop`) and
+not a binary. `uwsm-app` accepts either one. The entry of each of these two
+packages carries more than the name of the binary:
+
+```
+slack.desktop    /usr/bin/slack --gtk-version=3 -s %U
+todoist.desktop  env DESKTOPINTEGRATION=false /usr/bin/todoist --no-sandbox %U
+```
+
+The entry ID leaves those flags with the package that owns them. A copy of the
+flags in this repo would work today and go stale at the next update of the
+package, and nothing would report the difference. Omarchy's own bindings name a
+bare binary, which is right for an application whose entry adds nothing.
+
+Note that `~/.config/hypr/bindings.conf` has no effect. Omarchy 4 moved this
+configuration from `.conf` to Lua, and no file loads the old one. A binding
+that lives only there is dead, and Hyprland gives no error for it. This repo
+does not track that file. To see the bindings that are really live:
+
+```bash
+omarchy menu keybindings --print   # every binding, with its description
+hyprctl binds                      # what Hyprland itself holds
+```
+
 ## SSH
 
 `~/.ssh/config` tells ssh to use the 1Password agent:
@@ -391,6 +443,10 @@ change with `omarchy plymouth reset`.
   describes this machine, so a new machine runs each script one time.
 - **`*.bak` and `*.omarchy-upgrade-to-*.bak`** — backup files from Omarchy.
   Their names contain a date and a time. See `.gitignore`.
+- **`~/.config/hypr/bindings.conf`, `hyprland.conf` and the other `.conf`
+  files in `~/.config/hypr/`** — Omarchy 4 moved this configuration to Lua. No
+  file loads them, so a setting in one has no effect. The live files are
+  `hyprland.lua` and what it requires. See the **Keybindings** section.
 - **`~/.config/hypr/hyprlock.conf` and `hypridle.conf`** — Omarchy 4 does not
   use these files. The `hyprlock` and `hypridle` programs are not installed on
   this system. Quickshell locks the screen with `omarchy-shell lock lock`. The
