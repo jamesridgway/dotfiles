@@ -1,4 +1,4 @@
--- A fixed workspace-to-monitor layout, shared by the three-monitor machines.
+-- A fixed workspace-to-monitor layout, shared by the three-monitor setups.
 --
 -- Hyprland's default is to hand workspaces out in the sequence it discovers
 -- monitors, so `Super + 3` lands on whichever screen happened to claim it that

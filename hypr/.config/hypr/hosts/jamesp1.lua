@@ -53,3 +53,18 @@
 -- set up to drive an external monitor from the NVIDIA outputs.
 hl.env("LIBVA_DRIVER_NAME", "iHD") -- intel-media-driver, for the Iris Xe
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "mesa")
+
+-- Workspace layout at "Platform - Desk 1": the desk's two DELL SE2425HM, then
+-- the laptop panel on the right. The descriptions and the order match the
+-- hl.monitor() rules in monitors.lua, which pin them at 0, 1920 and 3840 on
+-- the x axis.
+--
+-- Unlike the desktops, this machine leaves the desk. A workspace rule whose
+-- monitor is absent is harmless: Hyprland opens that workspace on the focused
+-- monitor instead, so on the panel alone -- or at another desk -- `Super + 1`
+-- behaves as if there were no rule at all.
+require("hypr.lib.workspaces").three_across({
+  left = "desc:Dell Inc. DELL SE2425HM 7YB8RB4",
+  centre = "desc:Dell Inc. DELL SE2425HM 7TC8RB4",
+  right = "desc:BOE 0x0AE0",
+})

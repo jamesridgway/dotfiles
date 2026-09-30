@@ -69,7 +69,16 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy
 -- Find the strings to match with:
 --   hyprctl -j monitors all | jq -r '.[].description'
 --
--- jamesp1's internal panel is BOE 0x0AE0, 2560x1600@165. It uses the catch-all.
+-- jamesp1 at "Platform - Desk 1": the desk's two DELL SE2425HM at 1920x1080,
+-- left to right, then the laptop's internal panel BOE 0x0AE0 at 2560x1600@165
+-- on their right. The Dells run at scale 1; the panel keeps
+-- omarchy_monitor_scale, so `Super + /` still drives it. The panel needs its own
+-- rule to be pinned at all -- on the catch-all's "auto" it goes wherever the
+-- free space is. Because it sits at the right-hand end, its position depends
+-- only on the Dells' widths, so a change to its scale needs no edit here.
+hl.monitor({ output = "desc:Dell Inc. DELL SE2425HM 7YB8RB4", mode = "preferred", position = "0x0", scale = 1 })
+hl.monitor({ output = "desc:Dell Inc. DELL SE2425HM 7TC8RB4", mode = "preferred", position = "1920x0", scale = 1 })
+hl.monitor({ output = "desc:BOE 0x0AE0", mode = "preferred", position = "3840x0", scale = omarchy_monitor_scale })
 
 -- jamesdesktop: three DELL U2715H at 2560x1440, side by side, left to right.
 -- The serial is what identifies each one, because all three are the same model
@@ -105,11 +114,11 @@ hl.monitor({ output = "desc:Dell Inc. DELL U2415 07MT016231KCL", mode = "preferr
 -- skipped silently if it doesn't. This is the same require_optional mechanism
 -- Omarchy uses for its own theme overrides.
 --
--- That is where the workspace-to-monitor layout lives. jamestccsbox and
--- jamesdesktop each call hypr/lib/workspaces.lua to pin 5 6 7 to the left
--- screen, 1 2 3 4 to the centre and 8 9 10 to the right. It is not in this file
--- because a workspace rule for an absent monitor is not inert the way an
--- hl.monitor() rule is -- Hyprland still has to put the workspace somewhere.
+-- That is where the workspace-to-monitor layout lives. jamestccsbox,
+-- jamesdesktop and jamesp1 each call hypr/lib/workspaces.lua to pin 5 6 7 to
+-- the left screen, 1 2 3 4 to the centre and 8 9 10 to the right. It is not in
+-- this file because a workspace rule for an absent monitor is not inert the way
+-- an hl.monitor() rule is -- Hyprland still has to put the workspace somewhere.
 --
 -- Read the hostname from /etc/hostname, NOT from os.getenv("HOSTNAME").
 -- HOSTNAME is a bash shell variable that bash does not export, so Hyprland's
