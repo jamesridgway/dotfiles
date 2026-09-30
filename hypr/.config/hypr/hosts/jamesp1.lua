@@ -10,4 +10,46 @@
 -- because omarchy-hyprland-monitor-scaling rewrites it together with the
 -- monitor scale. Setting it in both files would leave this copy stale.
 
--- (no host-specific settings at present)
+-- Keep VA-API and GLX on the Intel iGPU, so that browser video works.
+--
+-- jamesp1 is a hybrid machine: an Intel Iris Xe at PCI 00:02.0 and an NVIDIA
+-- RTX A1000 at 01:00.0. Only the Intel side has a display attached. The
+-- internal panel eDP-1 is a connector of card2, which is the Intel device, and
+-- every connector on the NVIDIA card -- DP-1, DP-2, HDMI-A-1 -- reads
+-- disconnected. The dGPU here drives nothing and is only ever a compute device.
+--
+-- Omarchy's default/hypr/nvidia.lua sets LIBVA_DRIVER_NAME=nvidia and
+-- __GLX_VENDOR_LIBRARY_NAME=nvidia on any machine that HAS a GSP-capable
+-- NVIDIA GPU -- PCI device ID 0x1e00 or above, and the A1000 is 0x25b9. It
+-- never asks whether that GPU drives a display. Chromium then composites on
+-- Intel while being told to decode video on NVIDIA, and that cross-GPU handoff
+-- fails: in Chrome, YouTube and Google Meet play audio while the picture stays
+-- frozen on the poster frame. Pointing both variables back at the GPU that is
+-- actually drawing the screen fixes it, and keeps hardware decode -- the Intel
+-- path is also the better-tested one for browsers on Wayland.
+--
+-- Reported upstream several times over, unfixed as of Omarchy 4.0.4:
+--   https://github.com/omacom/omarchy/issues/9096   -- ThinkPad P14s Gen 4, same GA107 die
+--   https://github.com/omacom/omarchy/issues/11761  -- Dell Precision 5480
+--   https://github.com/omacom/omarchy/issues/13081  -- also an RTX A1000
+--
+-- Two things make these lines land rather than the ones in nvidia.lua. This
+-- file is required from monitors.lua, which hyprland.lua loads AFTER
+-- require("default.hypr.omarchy") has pulled in envs.lua and with it
+-- nvidia.lua, so these run second. And Hyprland's env handler is
+-- setenv(name, value, 1) -- the 1 is overwrite -- so the second write is the
+-- one that survives. Check that ordering still holds if hyprland.lua is ever
+-- rearranged, because getting it wrong fails silently.
+--
+-- NVD_BACKEND, the third variable nvidia.lua sets, is left alone: it selects a
+-- backend within libva-nvidia-driver, which nothing loads once the driver is
+-- iHD.
+--
+-- A process reads its environment at exec time, so this needs a full logout
+-- and login, not a Hyprland reload. Confirm with:
+--   systemctl --user show-environment | grep -E 'LIBVA|GLX'
+--
+-- This assumes everything renders on Intel. Revisit if this machine is ever
+-- set up to drive an external monitor from the NVIDIA outputs.
+hl.env("LIBVA_DRIVER_NAME", "iHD") -- intel-media-driver, for the Iris Xe
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "mesa")
