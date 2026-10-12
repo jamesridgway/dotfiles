@@ -39,7 +39,11 @@
       ],
       "right": [
         {
-          "id": "omarchy.tray"
+          "id": "omarchy.tray",
+          "pinned": [
+            "Slack_status_icon_1"
+          ],
+          "hidden": []
         },
         {
           "id": "omarchy.tailscale"
