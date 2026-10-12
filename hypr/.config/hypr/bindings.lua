@@ -41,6 +41,25 @@
 hl.unbind("SUPER + SHIFT + S")
 o.bind("SUPER + SHIFT + S", "Slack", { launch = "slack.desktop", focus = "^slack$" })
 
+-- Slack lives in the scratchpad: it starts with Hyprland, and every Slack
+-- window opens on special:scratchpad without being shown. SUPER + S toggles
+-- the scratchpad as usual, and SUPER + SHIFT + S still works -- focusing a
+-- window on a hidden special workspace brings that workspace up with it.
+--
+-- These are not keybindings, but they belong with the key above: together they
+-- are one behaviour, and hyprland.lua is Omarchy's file, not this repo's.
+--
+-- The start goes through uwsm-app by desktop entry ID, for the same reason the
+-- binding does. It replaces ~/.config/autostart/slack.desktop, which nothing in
+-- this repo tracked.
+o.launch_on_start("slack.desktop")
+o.window("^slack$", { workspace = "special:scratchpad silent" })
+
 -- SUPER + SHIFT + T is free in Omarchy's defaults. SUPER + T, which toggles a
 -- window between floating and tiling, is a different key and is left alone.
 o.bind("SUPER + SHIFT + T", "Todoist", { launch = "todoist.desktop", focus = "^todoist$" })
+
+-- Todoist shares the scratchpad with Slack, on the same terms as above: it
+-- starts with Hyprland, and its windows open there unseen.
+o.launch_on_start("todoist.desktop")
+o.window("^todoist$", { workspace = "special:scratchpad silent" })
