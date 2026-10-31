@@ -86,8 +86,14 @@ public configuration works without it. `.gitignore` here ignores everything in
 `ssh/.ssh/` except `config`, so a host file cannot land in this repo by
 accident.
 
-To add a host, edit `~/.ssh/config.d/hosts` (it links into the private repo),
-then commit and push in `../dotfiles-private`.
+Git works the same way. `git/.config/git/config` includes
+`~/.config/git/config.private`, which the private repo provides, for settings
+that name a private host, such as a credential helper for a work GitLab. The
+include comes before `config.local`, so a per-machine value still wins.
+
+To add a host, edit `~/.ssh/config.d/hosts` or `~/.config/git/config.private`
+(both link into the private repo), then commit and push in
+`../dotfiles-private`.
 
 ## Packages
 

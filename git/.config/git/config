@@ -39,6 +39,11 @@
 	helper =
 	helper = !/usr/bin/gh auth git-credential
 
+# Settings that name private hosts live in ~/.config/git/config.private, which
+# the private dotfiles-private repo provides. Git ignores a missing include.
+[include]
+	path = config.private
+
 # Per-machine overrides (e.g. a work email) live in ~/.config/git/config.local,
 # which is not tracked in this repo. Git ignores a missing include, so machines
 # without one get the defaults above. Keep this include last: later values win,
