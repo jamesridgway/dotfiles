@@ -30,7 +30,7 @@ omarchy/.config/omarchy/branding/about.txt   ->   ~/.config/omarchy/branding/abo
 | `tmux`      | tmux configuration                                                                                       |
 | `git`       | git aliases and defaults                                                                                 |
 | `autostart` | 1Password autostart entry                                                                                |
-| `ssh`       | 1Password SSH agent (`IdentityAgent`)                                                                    |
+| `ssh`       | 1Password SSH agent (`IdentityAgent`), `Include` of the private hosts in `~/.ssh/config.d/`              |
 
 ## Install on a new machine
 
@@ -48,9 +48,10 @@ The `bootstrap` script does these steps:
 3. Do a test run, and show the plan.
 4. Ask you for approval.
 5. Make the symbolic links.
-6. Install the packages that the configuration assumes.
-7. Install the third-party plugins in `plugins.txt`.
-8. Run the scripts in `setup/` that changed since the last run.
+6. Clone and stow the private companion repo (see below).
+7. Install the packages that the configuration assumes.
+8. Install the third-party plugins in `plugins.txt`.
+9. Run the scripts in `setup/` that changed since the last run.
 
 The test run looks for a file that is already at a target path. The script
 compares each such file with the copy in this repo. When every one of these
@@ -72,9 +73,25 @@ when it finds a conflict, or when a package or a plugin does not install. A
 package or a plugin that does not install stops neither the other packages and
 plugins nor the rest of the run.
 
+## Private hosts
+
+This repo is public, so SSH hosts do not go in `ssh/.ssh/config`. That file
+starts with `Include config.d/*`, and the hosts live in the private repo
+`jamesridgway/dotfiles-private`, under `ssh/.ssh/config.d/`. The private repo
+has the same layout as this one: each top-level directory is a stow package.
+
+`./bootstrap` clones it to `../dotfiles-private` (or to `$DOTFILES_PRIVATE`)
+and stows it. If the clone fails, the step warns and the run continues: the
+public configuration works without it. `.gitignore` here ignores everything in
+`ssh/.ssh/` except `config`, so a host file cannot land in this repo by
+accident.
+
+To add a host, edit `~/.ssh/config.d/hosts` (it links into the private repo),
+then commit and push in `../dotfiles-private`.
+
 ## Packages
 
-Step 6 installs the tools that the configuration in this repo assumes, but that
+Step 7 installs the tools that the configuration in this repo assumes, but that
 no package depends on. There are three:
 
 | Package            | Command   | Why it is here                              |

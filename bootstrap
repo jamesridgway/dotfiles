@@ -253,6 +253,78 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Private
+#
+# This repo is public, so anything that names a real host lives in a private
+# companion repo with the same layout -- one stow package per directory. The
+# public ssh/.ssh/config pulls its hosts in with `Include config.d/*`, and the
+# gitignore here keeps config.d/ out of this repo.
+#
+# The private repo is optional. Without it, or without access to it, the
+# public configuration still works and this step only says so.
+# ---------------------------------------------------------------------------
+
+heading "Private"
+
+private_dir="${DOTFILES_PRIVATE:-$(dirname "$PWD")/dotfiles-private}"
+private_url="git@github.com:jamesridgway/dotfiles-private.git"
+
+stow_private() {
+  local -a private_packages=()
+  local dir plan output reply
+
+  if [[ ! -d $private_dir ]]; then
+    work "cloning $private_url"
+    if ! output=$(git clone -q "$private_url" "$private_dir" 2>&1); then
+      warn "could not clone the private repo, skipping"
+      info "$output"
+      return 0
+    fi
+  fi
+
+  for dir in "$private_dir"/*/; do
+    [[ -d $dir ]] && private_packages+=("$(basename "$dir")")
+  done
+  if [[ ${#private_packages[@]} -eq 0 ]]; then
+    info "no packages in $private_dir"
+    return 0
+  fi
+
+  # The same reason as above: ssh checks the mode of included files too.
+  find "$private_dir/ssh/.ssh" -type f -exec chmod 600 {} + 2>/dev/null || true
+
+  if ! plan=$(stow -n -v --no-folding -d "$private_dir" -t "$HOME" "${private_packages[@]}" 2>&1); then
+    bad "stow reports conflicts in $private_dir. Nothing from it was linked."
+    printf '%s\n' "$plan" | sed 's/^/    /' >&2
+    return 0
+  fi
+
+  plan=$(printf '%s\n' "$plan" | grep -v '^WARNING: in simulation mode' || true)
+  if [[ -z ${plan//[[:space:]]/} ]]; then
+    ok "already stowed from ${DIM}$private_dir${RESET}"
+    return 0
+  fi
+
+  info "from $private_dir:"
+  printf '\n'
+  printf '%s\n' "$plan" | sed "s/^/    ${DIM}/;s/\$/${RESET}/"
+  printf '\n'
+  read -rp "  ${BOLD}Apply?${RESET} [y/N] " reply
+  if [[ ${reply,,} != y ]]; then
+    warn "private packages skipped"
+    return 0
+  fi
+  if ! output=$(stow -v --no-folding -d "$private_dir" -t "$HOME" "${private_packages[@]}" 2>&1); then
+    bad "stow failed for $private_dir"
+    printf '%s\n' "$output" | sed 's/^/    /' >&2
+    return 0
+  fi
+  ok "stowed ${private_packages[*]} from ${DIM}$private_dir${RESET}"
+}
+
+stow_private
+
+# ---------------------------------------------------------------------------
 # Packages
 #
 # Tools that the configuration in this repo assumes, but that no package
