@@ -39,6 +39,9 @@
       ],
       "right": [
         {
+          "id": "jamesridgway.woocommerce"
+        },
+        {
           "id": "omarchy.tray",
           "pinned": [
             "Slack_status_icon_1"
