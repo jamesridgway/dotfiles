@@ -23,9 +23,12 @@
         },
         {
           "id": "omarchy.clock",
-          "format": "dddd HH:mm",
+          "format": "HH:mm:ss - ddd, d MMM yyyy",
           "formatAlt": "d MMMM 'W'ww yyyy",
           "verticalFormat": "HH\n—\nmm"
+        },
+        {
+          "id": "omarchy.elsewhen"
         },
         {
           "id": "omarchy.keyboard-layout"
