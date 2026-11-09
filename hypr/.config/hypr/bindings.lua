@@ -55,8 +55,11 @@ o.bind("SUPER + SHIFT + S", "Slack", { launch = "slack.desktop", focus = "^slack
 o.launch_on_start("slack.desktop")
 o.window("^slack$", { workspace = "special:scratchpad silent" })
 
--- SUPER + SHIFT + T is free in Omarchy's defaults. SUPER + T, which toggles a
--- window between floating and tiling, is a different key and is left alone.
+-- Omarchy binds SUPER + SHIFT + T to Activity (btop in a terminal). Todoist
+-- takes the key here; btop is one Omarchy menu search away. SUPER + T, which
+-- toggles a window between floating and tiling, is a different key and is
+-- left alone.
+hl.unbind("SUPER + SHIFT + T")
 o.bind("SUPER + SHIFT + T", "Todoist", { launch = "todoist.desktop", focus = "^todoist$" })
 
 -- Todoist shares the scratchpad with Slack, on the same terms as above: it
