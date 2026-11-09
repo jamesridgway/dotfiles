@@ -114,11 +114,10 @@ hl.monitor({ output = "desc:Dell Inc. DELL U2415 07MT016231KCL", mode = "preferr
 -- skipped silently if it doesn't. This is the same require_optional mechanism
 -- Omarchy uses for its own theme overrides.
 --
--- That is where the workspace-to-monitor layout lives. jamestccsbox,
--- jamesdesktop and jamesp1 each call hypr/lib/workspaces.lua to pin 5 6 7 to
--- the left screen, 1 2 3 4 to the centre and 8 9 10 to the right. It is not in
--- this file because a workspace rule for an absent monitor is not inert the way
--- an hl.monitor() rule is -- Hyprland still has to put the workspace somewhere.
+-- Do not pin workspaces to monitors with hl.workspace_rule. Omarchy 4.5 gives
+-- every monitor its own workspaces 1-10 (default/hypr/monitor-workspaces.lua).
+-- It renumbers workspaces into per-monitor blocks on startup and each time a
+-- monitor connects, so fixed global rules conflict with it.
 --
 -- Read the hostname from /etc/hostname, NOT from os.getenv("HOSTNAME").
 -- HOSTNAME is a bash shell variable that bash does not export, so Hyprland's

@@ -24,7 +24,7 @@ omarchy/.config/omarchy/branding/about.txt   ->   ~/.config/omarchy/branding/abo
 | Package     | Contents                                                                                                 |
 |-------------|----------------------------------------------------------------------------------------------------------|
 | `omarchy`   | About text, screensaver text, `shell.json` (bar layout, idle times), wallpaper, post-update hook         |
-| `hypr`      | `bindings.lua`, `monitors.lua`, the per-host files in `hypr/hosts/`, the workspace layout in `hypr/lib/` |
+| `hypr`      | `bindings.lua`, `monitors.lua`, the per-host files in `hypr/hosts/`                                      |
 | `kitty`     | Terminal configuration                                                                                   |
 | `btop`      | Resource monitor                                                                                         |
 | `tmux`      | tmux configuration                                                                                       |
@@ -258,58 +258,20 @@ source code:
   nothing tells you about the failure. Read `/etc/hostname` in place of the
   variable.
 
-### Workspaces on the three-monitor machines
+### Workspaces
 
-`jamestccsbox` and `jamesdesktop` each have three panels side by side. Both pin
-the same workspace numbers to the same positions on the desk:
+Omarchy 4.5 gives every monitor its own workspaces 1 to 10. `Super + 3` goes to
+the third workspace of the monitor that has focus, and the bar shows the
+workspaces of each monitor as 1 to 10. Internally Omarchy gives each physical
+monitor (make, model and serial) a block of ten global workspace IDs, 1-10,
+11-20, 21-30, and records the block for each monitor in
+`~/.local/state/omarchy/monitor-workspaces`.
 
-| Left    | Centre     | Right    |
-|---------|------------|----------|
-| 5 6 7   | 1 2 3 4    | 8 9 10   |
-
-Hyprland otherwise gives workspaces to monitors in the sequence that it finds
-the monitors. Therefore `Super + 3` reaches a different screen after a reboot or
-a replug. The rules make the number a place instead.
-
-`hypr/lib/workspaces.lua` holds the layout. Each host file calls it with the
-three `desc:` strings of that machine:
-
-```lua
-require("hypr.lib.workspaces").three_across({
-  left = "desc:Dell Inc. DELL U2415 7MT0177S3UNL",
-  centre = "desc:Dell Inc. DELL U2415 07MT01624065L",
-  right = "desc:Dell Inc. DELL U2415 07MT016231KCL",
-})
-```
-
-The first workspace of each row is that monitor's default: 5 on the left, 1 in
-the centre, 8 on the right. These are the workspaces that a session starts with.
-
-The workspaces are not persistent. An empty workspace leaves the bar until
-something opens on it. The rule still holds, so `Super + 6` makes workspace 6 on
-the left screen again. To show all ten at all times, add `persistent = true` to
-the `hl.workspace_rule` call in `hypr/lib/workspaces.lua`.
-
-The layout is in the per-host files and not in `hypr/monitors.lua`, unlike the
-monitor rules. A monitor rule for a panel that you did not connect has no
-effect. A workspace rule for a panel that you did not connect does not behave
-the same way, because Hyprland must put the workspace on some monitor.
-
-A rule applies when Hyprland makes the workspace. A workspace that already
-exists stays on its monitor until the next login.
-
-Test the rules with:
-
-```bash
-hyprctl -j workspacerules | jq -r '.[] | "\(.workspaceString) -> \(.monitor)"'
-hyprctl dispatch 'hl.dsp.focus({ workspace = "6" })'
-hyprctl -j monitors | jq -r '.[] | select(.focused) | .name'
-```
-
-Note the Lua form of `hyprctl dispatch`. Hyprland 0.56 reads the configuration
-with a Lua parser, and it rejects the old `hyprctl dispatch workspace 6` with
-`')' expected near '6'`. `hyprctl keyword` gives `keyword can't work with
-non-legacy parsers`, and `hyprctl eval` takes its place.
+This repo used to pin workspaces to screens with `hl.workspace_rule` (5 6 7 on
+the left, 1 2 3 4 in the centre, 8 9 10 on the right). Do not add rules like
+that again. Omarchy renumbers workspaces into blocks on startup and each time a
+monitor connects, so global rules conflict with it. You cannot turn that off
+from user config.
 
 ## Keybindings
 
